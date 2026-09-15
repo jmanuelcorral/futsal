@@ -27,8 +27,48 @@ La caché se valida por bytes completos en cada uso. Un archivo incorrecto
 **bloquea el build**, no se reemplaza silenciosamente. Las descargas usan
 archivos parciales propios, tamaño máximo, plazo de 600 s y ningún reintento
 automático. El TPZ de **1.281.349.702 bytes** se descarga completo, aunque sólo
-se extrae el template release del destino. La caché Windows existente en
+se extrae la plantilla declarada para el destino. La caché Windows existente en
 `tools\godot\.cache` se puede reutilizar; no se reinstala el entorno anterior.
+
+En macOS, el miembro `templates/macos.zip` se extrae directamente al **HOME
+privado del build**, bajo
+`Library\Application Support\Godot\export_templates\4.7.2.stable\macos.zip`,
+antes de invocar el editor. Godot comprueba primero
+esa ubicación estándar incluso con `custom_template/release`. No se instala
+en el HOME real del runner ni se usa `XDG_DATA_HOME` como sustituto en macOS.
+Windows y Linux conservan su directorio temporal `work/templates`.
+
+La fuente compartida activa
+`[rendering] textures/vram_compression/import_etc2_astc=true`: Universal2
+requiere la opción de **importación del proyecto**, no sólo
+`texture_format/etc2_astc` del preset. El configurador macOS exige el booleano
+`true` antes de importar. Se conserva Forward+ y no se cambian los presets,
+las políticas de firma ni los oráculos de gameplay.
+
+### Modo declarado por plataforma
+
+| Plataforma | Plantilla oficial | Exportación |
+|---|---|---|
+| Windows x86_64 | `windows_release_x86_64.exe` | `--export-release` |
+| Linux x86_64, preview experimental | `linux_debug.x86_64` | **`--export-debug`** |
+| macOS Universal2 | release del ZIP `macos.zip` | `--export-release` |
+
+La excepción Linux está autorizada por el MRP del
+[bug Godot #87626](https://github.com/godotengine/godot/issues/87626), abierto
+en la comprobación de coordinación del 15 de septiembre de 2026.
+Es un **workaround explícito con la plantilla DEBUG oficial 4.7.2**, no una
+build release optimizada ni evidencia de FPS. No cambia la versión del motor,
+los pins globales, Popup nativo, `embed_subwindows`, presentación o gameplay.
+No hay whitelist, motor personalizado ni reducción de los smokes.
+
+El manifest fija `buildType` para los tres destinos. Linux selecciona
+`templates/linux_debug.x86_64`, con SHA-256
+`1a291d3d15e4180b60b0af96cf6458f11fe143636d76575ddf1e23d1a3f24f2e`,
+y declara `engineWorkaround`. El loader rechaza combinaciones incoherentes
+de tipo/miembro y debug fuera de Linux. El pipeline sólo permite ese debug
+en versiones `-preview`, comprueba el pin del miembro extraído y configura
+`custom_template/debug`; Windows/macOS mantienen `custom_template/release`.
+La CLI selecciona este modo desde el manifest: no necesita un flag adicional.
 
 ## Contrato del build
 
@@ -56,7 +96,7 @@ Cada build:
 2. Extrae el editor y template verificados, configura **sólo la copia privada**
    con la ruta del template y ejecuta importación nativa. No usa `Common.ps1`,
    inventarios Windows ni el diagnóstico de Blender/Foundation.
-3. Ejecuta los smokes fuente, exporta con **`--export-release`**, prepara avisos
+3. Ejecuta los smokes fuente, exporta con el **modo declarado por plataforma**, prepara avisos
    y ZIP, lo extrae en una instalación temporal y ejecuta ambos smokes otra vez
    **desde el binario del ZIP extraído**.
 4. Coteja bytes, PCK, permisos, enlaces, arquitectura, evidencias y preservación
@@ -125,6 +165,22 @@ Los nombres son:
 Cada candidato lleva un `.sha256`, un `.build.json` y `proof\<plataforma>`.
 La metadata conserva commit o su ausencia explícita, motor, template, plataforma,
 snapshot de fuente, contenido/hash del ZIP, cuatro recorridos y limitaciones.
+La información interna de este pipeline es `BUILD.json`; debe coincidir con
+el `.build.json` externo. En Linux ambos declaran **`buildType=debug`**, el
+miembro de plantilla, su SHA-256 y el workaround upstream. El auditor exige
+`--export-debug` en la prueba `export-debug`, rechaza flags mezclados y verifica
+el mismo preset. Windows/macOS conservan `buildType=release` y `export-release`.
+La variante canónica siempre define `buildType`, `templateEntry`,
+`templateSha256` y `engineWorkaround`. En release los tres campos de procedencia
+son `null`: se admite también su ausencia histórica, independientemente en
+`BUILD.json` y `.build.json`, pero **ningún valor no-null sin acreditación**.
+Se rechazan incluso rutas o hashes plausibles, el miembro/pin debug de Linux,
+booleanos, números, cadenas vacías y contenedores. `buildType` sigue siendo
+obligatorio y exacto. Debug exige siempre los cuatro valores exactos fijados.
+El productor y los dos lectores consumen esa misma variante; CLI e índice
+proyectan sólo después de validarla. `sha256` continúa siendo el hash del ZIP,
+nunca el de la plantilla.
+El `BUILD_INFO.json` del paquete R3 local separado no se modifica.
 Los logs, JSON y manifiestos nativos permanecen junto a sus hashes, no sólo un
 `passed=true`. Las rutas dentro de los reportes son las de la invocación original:
 auditarlas después **no reconstruye un proceso vivo ni demuestra una nueva ejecución**.
@@ -267,6 +323,156 @@ Los candidatos locales con `commit=null` conservan auditoría pasiva, pero nunca
 acreditan un commit ni pasan como conjunto publicable.
 
 ## Evidencia y límites de esta entrega
+
+### Corrección R3 de tooling: contrato de procedencia release
+
+La fuente aislada está en
+`build\release\platform-modes-ci34990490983-r3\source`, extraída del ZIP
+inmutable R2 y corregida sólo en tooling/tests/documentación. Conserva los
+nueve deltas sobre 5de; el juego no cambia respecto de R2. **Esta R3 no es
+una ronda artística ni otro export de la preview de atletas.**
+
+Se reprodujeron **12 éxitos incorrectos** con el contrato R2: seis en CLI
+audit y seis en CLI verify/índice, sobre fixtures Windows/macOS con metadata
+externa alterada. Incluían `{templateEntry:true, templateSha256:7}`, miembro/pin
+Linux debug y `engineWorkaround` plausible. La corrección no filtra la salida:
+la variante release declara los tres `null` y el mismo validador tipado exige
+esos valores o ausencia tanto fuera como dentro del ZIP. El resto de
+`BUILD.json` conserva su coincidencia exacta; no se admiten otros campos extra.
+
+Se ejecutó desde la copia aislada
+`python -m unittest tools.release.tests.test_release tools.release.tests.test_audit tools.release.tests.test_cli -v`:
+**69/69**, con seis métodos nuevos. Incluye **20** combinaciones release
+ausencia/null, **204** mutaciones release en metadata externa, interna o ambas
+coherentemente alteradas, **51** mutaciones debug y **cuatro** omisiones de
+campos debug obligatorios. Las regresiones nuevas no sustituyen el auditor
+ni el verificador por mocks: CLI audit rechaza **24** casos y CLI verify
+rechaza **16** sin escribir índice ni `SHA256SUMS`; cuatro controles CLI
+release y el conjunto de tres plataformas admiten ausencia/null.
+
+La auditoría pasiva R3 también acepta el Windows nativo histórico `4af542…`,
+con las tres salidas de procedencia `null`; ZIP y metadata permanecen intactos.
+No se repitieron Godot, WSL, exports o smokes. La auditoría Linux real con R2
+comunicada por coordinación sigue siendo evidencia heredada aprobada, no una
+ejecución nueva de Ferro. No se modifican permisos NTFS ni oráculos.
+La fuente sigue siendo local, `sourceCommit=null`, no publicable; queda la
+relectura acotada de Vasquez y después la integración/CI por coordinación.
+
+### Histórico R2: proyecciones corregidas, contrato release rechazado
+
+R2 añadió `templateEntry` y `templateSha256` a CLI e índice y resolvió la
+omisión Linux. No cerraba todavía el contrato de esos campos en release:
+aceptaba procedencia externa no acreditada. Por ello su ZIP `2311d111…`
+y parche `d0bce2e…` se conservan como **NO_GO_PRE_CI por ese P2**, sin
+invalidar su auditoría Linux real ni reabrir el resto de las correcciones.
+
+La copia histórica está en
+`build\release\platform-modes-ci34990490983-r2\source`: conserva los mismos
+nueve deltas sobre `5de1baea195b8d10ba7845938b0a90f59a6d3071`, sin incorporar
+el juego vivo ni cambiar flags, productores, contadores o permisos.
+Se reprodujeron las dos omisiones con las regresiones reforzadas antes de
+corregir las salidas. Después se ejecutó desde esa copia
+`python -m unittest tools.release.tests.test_cli tools.release.tests.test_audit -v`:
+**26/26**. Cubren los valores exactos de miembro/hash en CLI Linux e índice
+de tres fixtures, su separación del hash del ZIP y la compatibilidad con
+metadata release sin esos campos. No son nuevas ejecuciones nativas.
+
+El freeze anterior `b3ed5e6…` y su parche `364a52a…` se conservan como
+**entrega de tooling rechazada por esa omisión P2**, no como GO vigente.
+Sus 94/94 unidades son evidencia histórica, no una repetición de toda la
+suite en R2. El recurso Linux aprobado que se produjo con aquella fuente
+se conserva por separado de este rechazo de las salidas JSON.
+Aquella copia sigue siendo local, `sourceCommit=null`, no publicable.
+
+### Integración Mac + workaround Linux tras el MRP
+
+Coordinación ejecutó `build\publication\popup-export-repro\comparison.json`
+en Ubuntu WSL real, con el mismo proyecto mínimo y cinco ciclos de
+`OptionButton`. El template release dejó conexiones `focus_entered` y
+`tree_exited` tras cerrar y terminó con salida 1; debug las limpió y terminó
+con salida 0. Ambos informes identifican Godot 4.7.2 oficial y ambos EOF.
+Esta evidencia es **heredada y leída pasivamente**: Ferro no repitió el MRP
+ni el pipeline Linux.
+
+La fuente histórica de integración está en
+`build\release\platform-modes-ci34990490983-fix\source`, basada en 5de más
+las correcciones Mac y los deltas de tooling Linux. **94/94 unidades** pasaron
+desde esa copia: las 77 previas, ocho de macOS y nueve nuevas de modo Linux.
+Cubren miembro/pin/flag/slot de plantilla, prohibición de debug fuera de la
+preview Linux, README explícito y rechazos del auditor ante metadata o
+`BUILD.json` discordantes y flags release/debug mezclados.
+
+Se verificaron los dos miembros Linux del TPZ fijado y se extrajo/configuró
+el debug real: **73.703.800 bytes**, SHA-256 `1a291d3…`.
+El miembro release conserva **73.519.416 bytes**, SHA-256
+`d9f79ab89b5ae369aeed11c6052d402e8218cd503bf85b4a235f9c30c46a7c63`.
+Se cotejaron `custom_template/debug`, `--export-debug` y los campos que recibirá
+el paquete **sin ejecutar ese comando**. Se preserva el PCK separado del
+preset Linux; no se confunde con `embed_subwindows`.
+
+El auditor de aquella entrega también aceptó el Windows release histórico `4af542…`,
+sin modificarlo ni volver a ejecutarlo. Los JSON de aquel directorio registran
+las unidades, la comprobación offline y esa auditoría pasiva.
+
+Posteriormente, coordinación ejecutó el pipeline completo en Ubuntu WSL
+sobre la fuente `b3ed5e6…`: source **201/201 y 1080/1080**, export con
+`--export-debug`, paquete **218/218 y 1097/1097**, salida 0, ambos EOF y
+stderr vacío. Vasquez dio **ARTIFACT_APPROVE técnico local** al ZIP de
+**27.884.424 bytes**, SHA-256
+`b9fd9564743f811514a412567a3add0786660ea12270b478b82d0ef00a54c8bb`,
+en `source\build\release\linux-native\dist\linux-x86_64` de aquella entrega.
+El ELF coincide byte a byte con la plantilla debug oficial `1a291d3…`.
+Su auditoría completa pasó en WSL; Ferro cotejó pasivamente ZIP, ELF y
+metadata, sin repetir Godot.
+
+La auditoría desde Windows difiere únicamente en los modos de los archivos
+de evidencia sobre NTFS: WSL registra `0755`, Windows observa `0644`.
+**No se corrigen, normalizan ni falsean esos permisos** para dar verde.
+No es un fallo de streams, rutas o hashes; la CI sobre ext4 será independiente.
+El paquete conserva `commit=null` y no es publicable. Esta aprobación técnica
+local no acredita CI, optimización, FPS, calidad artística ni aceptación humana.
+R3, af23, productores, listas, contadores y presets permanecen intactos.
+
+### Corrección macOS del CI 34990490983
+
+El export macOS de `5de1baea195b8d10ba7845938b0a90f59a6d3071` terminó con
+salida 1 y ambos EOF completos. Sus diagnósticos señalan la ausencia de
+`macos.zip` en el perfil privado y la importación ETC2/ASTC desactivada.
+El preset ya contenía `texture_format/etc2_astc=true`; esa opción no sustituye
+la configuración del importador. La fuente oficial fijada confirma que
+`has_valid_export_configuration` comprueba primero el ZIP estándar y exige
+ETC2/ASTC para Universal2 o arm64.
+
+La corrección instala la plantilla en esa ubicación del perfil y añade
+**una única línea ASTC** a `game\project.godot`. La comprobación byte a byte
+confirma que el archivo vivo no recibió otros cambios. Para publicar sobre
+5de se usa el parche de esa línea, **no el archivo vivo completo**, que también
+contiene TAA y sombras de la iteración artística posterior.
+
+La copia `build\release\macos-ci34990490983-fix\source` parte sólo de 5de más
+los deltas macOS autorizados; no modifica la fixture Git de comparación ni
+hereda su procedencia. Se ejecutó
+`python -m unittest tools.release.tests.test_release -v`: **32/32**, con
+**ocho regresiones nuevas** de ubicación estándar/versionada, HOME privado,
+ausencia de fallback al HOME real, rechazo de sobrescritura, ASTC obligatorio
+y conservación de Forward+/Universal2/ad-hoc. Los recorridos de extracción
+no macOS conservan ubicación y bytes.
+
+También se extrajo el miembro real del TPZ oficial, verificado por su pin
+SHA-512, y se cotejaron sus bytes y las cabeceras de ambas plantillas:
+debug y release contienen **arm64 + x86_64**.
+`macos.zip`: **123.597.580 bytes**, SHA-256
+`88df5e2e6fee99088699be66e6d42e4da4fb0c5619d054297d755a49558a4792`.
+La configuración privada consumió ese archivo con ASTC habilitado y el
+perfil temporal quedó eliminado.
+
+Estas pruebas se ejecutaron **desde Windows**, sin arrancar Godot ni exportar
+R3. No son una exportación ni una ejecución macOS nativa: ambas requieren
+la próxima CI. `unit-result.json`, `official-template-check.json` y el handoff
+con parches para 5de están en esa carpeta de evidencia.
+El diagnóstico Linux y su MRP corresponden a coordinación. La ampliación
+posterior de tooling descrita arriba integra exclusivamente el workaround
+debug autorizado; no modifica ni repite sus pruebas nativas.
 
 ### Primer CI nativo: run 34965436939
 
@@ -523,6 +729,7 @@ fuentes 0.4 no aprueba por sí sola este nuevo pipeline multiplataforma.
 Referencias oficiales verificadas:
 
 - [Godot 4.7.2 y checksums](https://github.com/godotengine/godot-builds/releases/tag/4.7.2-stable).
+- [Exportador macOS del commit fijado: plantilla estándar y requisitos de textura](https://github.com/godotengine/godot/blob/ed1daf0bf001b61586d9930840f2f1394092c079/platform/macos/export/export_plugin.cpp).
 - [Exportar macOS: Universal2 y ad-hoc sin Developer ID](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_macos.html).
 - [Licencias y avisos de terceros](https://docs.godotengine.org/en/stable/about/complying_with_licenses.html).
 - [Runners estándar gratuitos de repositorios públicos](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).

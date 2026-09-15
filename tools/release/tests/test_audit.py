@@ -26,6 +26,42 @@ from tools.release.tests.test_smoke import SmokeFixture
 REPOSITORY = HERE.parents[1]
 
 
+def candidate_manifest() -> dict:
+    manifest = load_manifest(HERE / "manifest.json")
+    for item in manifest["licenses"]:
+        item["bytes"] = len(b"synthetic notice")
+        item["sha512"] = hashlib.sha512(b"synthetic notice").hexdigest()
+    return manifest
+
+
+def release_variant_mutations(platform_id: str) -> dict[str, dict]:
+    values = (True, False, 7, 0, "null", "", [], {})
+    changes = {
+        f"{field}-{index}": {field: value}
+        for field in ("templateEntry", "templateSha256", "engineWorkaround")
+        for index, value in enumerate(values)
+    }
+    changes.update({
+        "typed-pair": {"templateEntry": True, "templateSha256": 7},
+        "linux-debug-provenance": {
+            "templateEntry": "templates/linux_debug.x86_64",
+            "templateSha256": "1a291d3d15e4180b60b0af96cf6458f11fe143636d76575ddf1e23d1a3f24f2e",
+        },
+        "same-platform-entry": {"templateEntry": {
+            "windows-x86_64": "templates/windows_release_x86_64.exe",
+            "macos-universal": "templates/macos.zip",
+        }[platform_id]},
+        "hash-string": {"templateSha256": "0" * 64},
+        "workaround-url": {"engineWorkaround": "https://github.com/godotengine/godot/issues/87626"},
+        "buildType-bool": {"buildType": True},
+        "buildType-int": {"buildType": 7},
+        "buildType-null": {"buildType": None},
+        "buildType-near": {"buildType": "release "},
+        "buildType-debug": {"buildType": "debug"},
+    })
+    return changes
+
+
 def fake_binary(platform_id: str) -> bytes:
     data = bytearray(256)
     if platform_id.startswith("windows"):
@@ -80,12 +116,15 @@ class CandidateFixture:
             signing["libraries"] = {}
         snapshot = {"project.godot": "f" * 64} if snapshot is None else snapshot
         self.embedded = {
-            "schemaVersion": 1, **self.identity, "platform": platform_id, "buildType": "release",
+            "schemaVersion": 1, **self.identity, "platform": platform_id, "buildType": target["buildType"],
             "commit": commit, "sourceSnapshotSha256": snapshot_digest(snapshot),
             "engine": manifest["engine"]["versionOutput"], "engineEdition": "standard",
             "signing": signing, "projectLicense": None, "licensePolicy": "not-defined",
             "validationEvidenceFile": self.stem + ".build.json", "limitations": ["Synthetic unit fixture."],
         }
+        if target["buildType"] == "debug":
+            self.embedded.update({key: target[key] for key in
+                                  ("templateEntry", "templateSha256", "engineWorkaround")})
         self.files["BUILD.json"] = (json.dumps(self.embedded) + "\n").encode()
         with zipfile.ZipFile(self.archive, "w") as archive:
             for name, data in sorted(self.files.items()):
@@ -98,7 +137,8 @@ class CandidateFixture:
         write_json(self.proof / "source-snapshot.json", snapshot)
         self._process("engine-version", ["editor", "--version"], manifest["engine"]["versionOutput"] + "\n")
         self._process("import", ["editor", "--headless", "--editor", "--import"], "")
-        self._process("export-release", ["editor", "--export-release", target["preset"], "output"], "")
+        self._process("export-" + target["buildType"],
+                      ["editor", "--export-" + target["buildType"], target["preset"], "output"], "")
         if platform_id.startswith("macos"):
             for label in ("export", "packaged"):
                 self._process(label + "-codesign-verify", ["codesign", "--verify"], "", "valid on disk\n")
@@ -176,27 +216,112 @@ class CandidateFixture:
         self.metadata["evidenceFiles"] = tree_index(self.directory / "proof")
         self.save()
 
+    def replace_embedded_build(self, embedded: dict) -> None:
+        with zipfile.ZipFile(self.archive) as archive:
+            entries = [(info, archive.read(info.filename)) for info in archive.infolist()]
+        with zipfile.ZipFile(self.archive, "w") as archive:
+            for info, data in entries:
+                archive.writestr(info, json.dumps(embedded).encode("utf-8")
+                                 if info.filename == "BUILD.json" else data)
+        self.metadata["archiveSha256"] = digest(self.archive)
+        self.metadata["archiveBytes"] = self.archive.stat().st_size
+        self.metadata["contents"] = verify_zip(self.archive)
+        self.archive.with_suffix(".sha256").write_text(
+            digest(self.archive) + "  " + self.archive.name + "\n", encoding="ascii")
+        self.save()
+
 
 class AuditTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.manifest = load_manifest(HERE / "manifest.json")
-        for item in self.manifest["licenses"]:
-            item["bytes"] = len(b"synthetic notice")
-            item["sha512"] = hashlib.sha512(b"synthetic notice").hexdigest()
+        self.manifest = candidate_manifest()
 
     def test_exact_three_candidates_with_raw_native_proofs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             checkout = GitFixture(root / "repo")
             snapshot = source_snapshot(checkout.root / "game")
+            fixtures = {}
             for name in PLATFORMS:
-                CandidateFixture(root, name, self.manifest, checkout.commit, snapshot)
+                fixtures[name] = CandidateFixture(root, name, self.manifest, checkout.commit, snapshot)
             with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
                 result = verify_collection(checkout.root, root, checkout.commit, "v0.4.0-preview")
                 self.assertTrue(result["ok"])
                 self.assertEqual(len(result["archives"]), 3)
+                self.assertEqual({item["platform"]: item["buildType"] for item in result["archives"]},
+                                 {"windows-x86_64": "release", "linux-x86_64": "debug",
+                                  "macos-universal": "release"})
+                self.assertEqual(next(item for item in result["archives"]
+                                      if item["platform"] == "linux-x86_64")["engineWorkaround"],
+                                 "https://github.com/godotengine/godot/issues/87626")
+                for entry in result["archives"]:
+                    validated = fixtures[entry["platform"]].metadata
+                    self.assertEqual(entry["templateEntry"], validated.get("templateEntry"))
+                    self.assertEqual(entry["templateSha256"], validated.get("templateSha256"))
+                    self.assertEqual(entry["sha256"], validated["archiveSha256"])
+                    if entry["platform"] == "linux-x86_64":
+                        self.assertEqual(entry["templateEntry"], "templates/linux_debug.x86_64")
+                        self.assertEqual(entry["templateSha256"],
+                                         "1a291d3d15e4180b60b0af96cf6458f11fe143636d76575ddf1e23d1a3f24f2e")
+                        self.assertNotEqual(entry["templateSha256"], entry["sha256"])
                 self.assertFalse(result["published"])
                 self.assertTrue(result["technicalReviewPending"])
+                for name in ("windows-x86_64", "macos-universal"):
+                    fixture = fixtures[name]
+                    nulls = {"templateEntry": None, "templateSha256": None, "engineWorkaround": None}
+                    fixture.metadata.update(nulls)
+                    fixture.replace_embedded_build({**fixture.embedded, **nulls})
+                result = verify_collection(checkout.root, root, checkout.commit, "v0.4.0-preview")
+                for entry in result["archives"]:
+                    if entry["platform"] != "linux-x86_64":
+                        for field in ("templateEntry", "templateSha256", "engineWorkaround"):
+                            self.assertIsNone(entry[field])
+
+    def test_release_accepts_omitted_null_and_mixed_optional_variant_fields(self) -> None:
+        fields = ("templateEntry", "templateSha256", "engineWorkaround")
+        pairs = [(0, 0), (7, 7), *[(mask, 7 ^ mask) for mask in range(8)]]
+        covered = 0
+        for platform_id in ("windows-x86_64", "macos-universal"):
+            with tempfile.TemporaryDirectory() as temporary:
+                fixture = CandidateFixture(Path(temporary), platform_id, self.manifest)
+                original = copy.deepcopy(fixture.metadata)
+                with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                    for outer_mask, inner_mask in pairs:
+                        with self.subTest(platform=platform_id, outer=outer_mask, inner=inner_mask):
+                            fixture.metadata = copy.deepcopy(original)
+                            fixture.metadata.update({key: None for index, key in enumerate(fields)
+                                                     if outer_mask & (1 << index)})
+                            embedded = {**fixture.embedded, **{
+                                key: None for index, key in enumerate(fields) if inner_mask & (1 << index)
+                            }}
+                            fixture.replace_embedded_build(embedded)
+                            result = audit_candidate(REPOSITORY, fixture.archive)
+                            for field in fields:
+                                self.assertIsNone(result.get(field))
+                            self.assertEqual(result["buildType"], "release")
+                            covered += 1
+        self.assertEqual(covered, 20)
+
+    def test_release_rejects_non_null_variant_fields_at_any_surface(self) -> None:
+        covered = 0
+        for platform_id in ("windows-x86_64", "macos-universal"):
+            with tempfile.TemporaryDirectory() as temporary:
+                fixture = CandidateFixture(Path(temporary), platform_id, self.manifest)
+                original = copy.deepcopy(fixture.metadata)
+                with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                    for label, change in release_variant_mutations(platform_id).items():
+                        for location in ("outer", "embedded", "both"):
+                            with self.subTest(platform=platform_id, change=label, location=location):
+                                fixture.metadata = copy.deepcopy(original)
+                                embedded = dict(fixture.embedded)
+                                if location != "embedded":
+                                    fixture.metadata.update(change)
+                                if location != "outer":
+                                    embedded.update(change)
+                                fixture.replace_embedded_build(embedded)
+                                with self.assertRaises(ReleaseError):
+                                    audit_candidate(REPOSITORY, fixture.archive)
+                                covered += 1
+        self.assertEqual(covered, 204)
 
     def test_candidate_rejects_fabricated_summary_or_missing_proof(self) -> None:
         mutations = {
@@ -235,6 +360,90 @@ class AuditTests(unittest.TestCase):
             fixture.save()
             with mock.patch("tools.release.build.load_manifest", return_value=self.manifest), self.assertRaises(ReleaseError):
                 audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_linux_debug_rejects_release_or_wrong_template_metadata(self) -> None:
+        changes = (
+            {"buildType": "release"},
+            {"buildType": True},
+            {"buildType": 7},
+            {"buildType": None},
+            {"templateEntry": "templates/linux_release.x86_64"},
+            {"templateEntry": True},
+            {"templateEntry": 7},
+            {"templateEntry": None},
+            {"templateSha256": "d9f79ab89b5ae369aeed11c6052d402e8218cd503bf85b4a235f9c30c46a7c63"},
+            {"templateSha256": True},
+            {"templateSha256": 7},
+            {"templateSha256": None},
+            {"templateSha256": self.manifest["platforms"]["linux-x86_64"]["templateSha256"].upper()},
+            {"engineWorkaround": None},
+            {"engineWorkaround": True},
+            {"engineWorkaround": 7},
+            {"engineWorkaround": "https://github.com/godotengine/godot/issues/87626/"},
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "linux-x86_64", self.manifest)
+            original = copy.deepcopy(fixture.metadata)
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                self.assertEqual(audit_candidate(REPOSITORY, fixture.archive)["buildType"], "debug")
+                for change in changes:
+                    for location in ("outer", "embedded", "both"):
+                        with self.subTest(change=change, location=location):
+                            fixture.metadata = copy.deepcopy(original)
+                            embedded = dict(fixture.embedded)
+                            if location != "embedded":
+                                fixture.metadata.update(change)
+                            if location != "outer":
+                                embedded.update(change)
+                            fixture.replace_embedded_build(embedded)
+                            with self.assertRaises(ReleaseError):
+                                audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_debug_requires_each_variant_field_even_when_both_documents_omit_it(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "linux-x86_64", self.manifest)
+            original = copy.deepcopy(fixture.metadata)
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                for field in ("buildType", "templateEntry", "templateSha256", "engineWorkaround"):
+                    with self.subTest(field=field):
+                        fixture.metadata = copy.deepcopy(original)
+                        fixture.metadata.pop(field)
+                        embedded = {key: value for key, value in fixture.embedded.items() if key != field}
+                        fixture.replace_embedded_build(embedded)
+                        with self.assertRaises(ReleaseError):
+                            audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_linux_debug_rejects_wrong_or_mixed_export_flags_with_updated_proof(self) -> None:
+        cases = (
+            ["editor", "--export-release", "Linux x86_64", "output"],
+            ["editor", "--export-release", "--export-debug", "Linux x86_64", "output"],
+            ["editor", "--export-debug", "--export-debug", "Linux x86_64", "output"],
+            ["editor", "--export-debug", "Windows Desktop", "output"],
+            ["editor", "--export-debug"],
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "linux-x86_64", self.manifest)
+            path = fixture.proof / "export-debug" / "process.json"
+            original = read_json(path)
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                for arguments in cases:
+                    with self.subTest(arguments=arguments):
+                        path.write_text(json.dumps({**original, "arguments": arguments}), encoding="utf-8")
+                        fixture.metadata["evidenceFiles"] = tree_index(fixture.directory / "proof")
+                        fixture.save()
+                        with self.assertRaises(ReleaseError):
+                            audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_linux_debug_embedded_build_cannot_disagree_with_outer_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "linux-x86_64", self.manifest)
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                for change in ({"buildType": "release"}, {"templateEntry": "templates/linux_release.x86_64"},
+                               {"engineWorkaround": None}):
+                    with self.subTest(change=change):
+                        fixture.replace_embedded_build({**fixture.embedded, **change})
+                        with self.assertRaisesRegex(ReleaseError, "BUILD.json"):
+                            audit_candidate(REPOSITORY, fixture.archive)
 
     def test_collection_rejects_extra_zip(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

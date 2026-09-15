@@ -159,6 +159,24 @@ def load_manifest(path: Path) -> dict[str, Any]:
             "Esta entrega exige Godot 4.7.2 standard.")
     require(set(manifest["platforms"]) == {"windows-x86_64", "linux-x86_64", "macos-universal"},
             "Se requieren exactamente las tres plataformas autorizadas.")
+    for platform_id, target in manifest["platforms"].items():
+        mode = target["buildType"]
+        require(mode in ("release", "debug"), "Tipo de template desconocido.")
+        if mode == "debug":
+            require(platform_id == "linux-x86_64" and
+                    target["engineWorkaround"] == "https://github.com/godotengine/godot/issues/87626",
+                    "Debug solo esta autorizado para la preview Linux por Godot #87626.")
+            require(type(target["templateSha256"]) is str and
+                    re.fullmatch(r"[0-9a-f]{64}", target["templateSha256"]) is not None,
+                    "El workaround Linux exige el SHA256 de la plantilla debug oficial.")
+        else:
+            require("engineWorkaround" not in target, "Un template release no declara el workaround debug.")
+        expected_entry = {
+            "windows-x86_64": f"templates/windows_{mode}_x86_64.exe",
+            "linux-x86_64": f"templates/linux_{mode}.x86_64",
+            "macos-universal": "templates/macos.zip",
+        }[platform_id]
+        require(target["templateEntry"] == expected_entry, "El miembro del TPZ no corresponde al tipo de build.")
     downloads = [engine["templates"], *manifest["licenses"]]
     downloads.extend(value["editor"] for value in manifest["platforms"].values())
     for item in downloads:

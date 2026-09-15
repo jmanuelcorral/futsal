@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import io
 import os
 import re
@@ -13,8 +14,10 @@ from pathlib import Path
 from unittest import mock
 
 from tools.release import __main__ as cli
-from tools.release.build import HERE
-from tools.release.common import read_json
+from tools.release.build import HERE, PLATFORMS, source_snapshot
+from tools.release.common import read_json, strict_json
+from tools.release.tests.git_fixture import GitFixture
+from tools.release.tests.test_audit import CandidateFixture, candidate_manifest, release_variant_mutations
 
 REPOSITORY = HERE.parents[1]
 COMMIT = "a" * 40
@@ -150,13 +153,115 @@ class CliTests(unittest.TestCase):
         evidence = {
             "archive": "fixture.zip", "archiveSha256": "0" * 64, "commit": None,
             "platform": "windows-x86_64", "publishableCandidate": False,
+            "buildType": "release",
         }
         with mock.patch.object(cli, "audit_candidate", return_value=evidence) as audit:
             result, output, errors = self.invoke(["audit", "--archive", "fixture.zip"],
                                                  {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "workflow_run"})
         self.assertEqual((result, errors), (0, ""))
         self.assertIn('"liveProcessesLaunched": false', output)
+        self.assertIn('"buildType": "release"', output)
+        result_json = strict_json(output)
+        self.assertIsNone(result_json["templateEntry"])
+        self.assertIsNone(result_json["templateSha256"])
+        self.assertEqual(result_json["sha256"], evidence["archiveSha256"])
         audit.assert_called_once()
+
+    def test_passive_audit_discloses_linux_debug_workaround(self) -> None:
+        evidence = {
+            "archive": "fixture.zip", "archiveSha256": "0" * 64, "commit": None,
+            "platform": "linux-x86_64", "publishableCandidate": False, "buildType": "debug",
+            "engineWorkaround": "https://github.com/godotengine/godot/issues/87626",
+            "templateEntry": "templates/linux_debug.x86_64",
+            "templateSha256": "1a291d3d15e4180b60b0af96cf6458f11fe143636d76575ddf1e23d1a3f24f2e",
+        }
+        with mock.patch.object(cli, "audit_candidate", return_value=evidence):
+            result, output, errors = self.invoke(["audit", "--archive", "fixture.zip"], {})
+        self.assertEqual((result, errors), (0, ""))
+        self.assertIn('"buildType": "debug"', output)
+        self.assertIn("https://github.com/godotengine/godot/issues/87626", output)
+        result_json = strict_json(output)
+        self.assertEqual(result_json["templateEntry"], evidence["templateEntry"])
+        self.assertEqual(result_json["templateSha256"], evidence["templateSha256"])
+        self.assertEqual(result_json["sha256"], evidence["archiveSha256"])
+        self.assertNotEqual(result_json["templateSha256"], result_json["sha256"])
+
+    def test_passive_audit_accepts_release_absence_and_null_without_claiming_provenance(self) -> None:
+        manifest = candidate_manifest()
+        for platform_id in ("windows-x86_64", "macos-universal"):
+            with tempfile.TemporaryDirectory() as temporary:
+                fixture = CandidateFixture(Path(temporary), platform_id, manifest)
+                original = copy.deepcopy(fixture.metadata)
+                with mock.patch("tools.release.build.load_manifest", return_value=manifest):
+                    for explicit in (False, True):
+                        with self.subTest(platform=platform_id, explicit=explicit):
+                            fields = {"templateEntry": None, "templateSha256": None,
+                                      "engineWorkaround": None} if explicit else {}
+                            fixture.metadata = {**copy.deepcopy(original), **fields}
+                            fixture.replace_embedded_build({**fixture.embedded, **fields})
+                            result, output, errors = self.invoke(
+                                ["audit", "--repository", str(REPOSITORY), "--archive", str(fixture.archive)], {})
+                            self.assertEqual((result, errors), (0, ""))
+                            report = strict_json(output)
+                            self.assertIs(report["ok"], True)
+                            self.assertEqual(report["buildType"], "release")
+                            for field in ("templateEntry", "templateSha256", "engineWorkaround"):
+                                self.assertIsNone(report[field])
+
+    def test_passive_audit_rejects_unaccredited_release_variant_before_projecting(self) -> None:
+        manifest = candidate_manifest()
+        for platform_id in ("windows-x86_64", "macos-universal"):
+            with tempfile.TemporaryDirectory() as temporary:
+                fixture = CandidateFixture(Path(temporary), platform_id, manifest)
+                original = copy.deepcopy(fixture.metadata)
+                changes = release_variant_mutations(platform_id)
+                with mock.patch("tools.release.build.load_manifest", return_value=manifest):
+                    for label in ("typed-pair", "linux-debug-provenance", "workaround-url", "buildType-bool"):
+                        for location in ("outer", "embedded", "both"):
+                            with self.subTest(platform=platform_id, change=label, location=location):
+                                fixture.metadata = copy.deepcopy(original)
+                                embedded = dict(fixture.embedded)
+                                if location != "embedded":
+                                    fixture.metadata.update(changes[label])
+                                if location != "outer":
+                                    embedded.update(changes[label])
+                                fixture.replace_embedded_build(embedded)
+                                result, output, errors = self.invoke(
+                                    ["audit", "--repository", str(REPOSITORY), "--archive", str(fixture.archive)], {})
+                                self.assertEqual(result, 1)
+                                self.assertEqual(output, "")
+                                self.assertIn("ERROR release:", errors)
+
+    def test_verifier_rejects_unaccredited_release_variant_before_writing_index(self) -> None:
+        manifest = candidate_manifest()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkout = GitFixture(root / "repo")
+            snapshot = source_snapshot(checkout.root / "game")
+            fixtures = {name: CandidateFixture(root, name, manifest, checkout.commit, snapshot)
+                        for name in PLATFORMS}
+            with mock.patch("tools.release.build.load_manifest", return_value=manifest):
+                for platform_id in ("windows-x86_64", "macos-universal"):
+                    fixture = fixtures[platform_id]
+                    original = copy.deepcopy(fixture.metadata)
+                    changes = release_variant_mutations(platform_id)
+                    for label in ("typed-pair", "linux-debug-provenance", "workaround-url", "buildType-bool"):
+                        for location in ("outer", "both"):
+                            with self.subTest(platform=platform_id, change=label, location=location):
+                                fixture.metadata = {**copy.deepcopy(original), **changes[label]}
+                                embedded = {**fixture.embedded, **changes[label]} if location == "both" else fixture.embedded
+                                fixture.replace_embedded_build(embedded)
+                                index = root / "indexes" / platform_id / label / location / "release-index.json"
+                                result, output, errors = self.invoke(
+                                    ["verify", "--repository", str(checkout.root), "--directory", str(root),
+                                     "--commit", checkout.commit, "--tag", VERSION, "--index", str(index)], {})
+                                self.assertEqual(result, 1)
+                                self.assertEqual(output, "")
+                                self.assertIn("ERROR release:", errors)
+                                self.assertFalse(index.exists())
+                                self.assertFalse(index.with_name("SHA256SUMS").exists())
+                    fixture.metadata = original
+                    fixture.replace_embedded_build(fixture.embedded)
 
     def test_workflow_python_forwards_version_input_on_main(self) -> None:
         workflow = (REPOSITORY / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")

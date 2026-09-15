@@ -64,6 +64,9 @@ def main() -> int:
             print(json.dumps({
                 "ok": True, "archive": metadata["archive"], "sha256": metadata["archiveSha256"],
                 "commit": metadata["commit"], "platform": metadata["platform"],
+                "buildType": metadata["buildType"], "engineWorkaround": metadata.get("engineWorkaround"),
+                "templateEntry": metadata.get("templateEntry"),
+                "templateSha256": metadata.get("templateSha256"),
                 "publishableCandidate": metadata["publishableCandidate"],
                 "published": False, "liveProcessesLaunched": False, "technicalReviewPending": True,
                 "scope": "Auditoria pasiva de bytes y evidencia archivada; no acepta procesos rehidratados.",

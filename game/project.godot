@@ -117,5 +117,6 @@ common/physics_ticks_per_second=60
 rendering_device/fallback_to_opengl3=false
 renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="forward_plus"
+textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=2
 environment/defaults/default_clear_color=Color(0.035, 0.043, 0.06, 1)

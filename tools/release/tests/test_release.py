@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -13,8 +14,8 @@ from unittest import mock
 
 from tools.release.archive import deterministic_zip, extract_zip, obtain, tree_index, verify_zip, zip_entries
 from tools.release.build import (
-    HERE, PLATFORMS, binary_architectures, configure_private_preset, project_identity,
-    source_snapshot, verify_collection,
+    HERE, PLATFORMS, _notices, binary_architectures, build_variant, configure_private_preset, export_arguments,
+    extract_private_template, isolated_environment, project_identity, source_snapshot, verify_collection,
 )
 from tools.release.common import (
     ReleaseError, boolean, digest, inside, integer, json_equal, load_manifest, read_json,
@@ -95,6 +96,34 @@ class CommonTests(unittest.TestCase):
         self.assertEqual(manifest["engine"]["templates"]["sha512"], old["templates"]["sha512"])
         self.assertEqual(manifest["platforms"]["windows-x86_64"]["editor"]["sha512"], old["editor"]["sha512"])
         self.assertEqual(len(manifest["licenses"]), 2)
+        self.assertEqual({name: target["buildType"] for name, target in manifest["platforms"].items()},
+                         {"windows-x86_64": "release", "linux-x86_64": "debug", "macos-universal": "release"})
+        linux = manifest["platforms"]["linux-x86_64"]
+        self.assertEqual(linux["templateEntry"], "templates/linux_debug.x86_64")
+        self.assertEqual(linux["engineWorkaround"], "https://github.com/godotengine/godot/issues/87626")
+
+    def test_manifest_rejects_incoherent_or_unauthorized_debug_variants(self) -> None:
+        original = read_json(HERE / "manifest.json")
+        mutations = [
+            ("windows-x86_64", {"buildType": "debug"}),
+            ("macos-universal", {"buildType": "debug"}),
+            ("linux-x86_64", {"buildType": True}),
+            ("linux-x86_64", {"buildType": "optimized"}),
+            ("linux-x86_64", {"templateEntry": "templates/linux_release.x86_64"}),
+            ("linux-x86_64", {"engineWorkaround": None}),
+            ("linux-x86_64", {"templateSha256": "not-a-pin"}),
+            ("linux-x86_64", {"templateSha256": None}),
+            ("windows-x86_64", {"templateEntry": "templates/windows_debug_x86_64.exe"}),
+        ]
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "manifest.json"
+            for platform, changes in mutations:
+                with self.subTest(platform=platform, changes=changes):
+                    changed = copy.deepcopy(original)
+                    changed["platforms"][platform].update(changes)
+                    path.write_text(json.dumps(changed), encoding="utf-8")
+                    with self.assertRaises((ReleaseError, KeyError)):
+                        load_manifest(path)
 
     def test_version_and_tag_are_inferred_not_overridden(self) -> None:
         identity = project_identity(REPOSITORY / "game")
@@ -177,6 +206,196 @@ class CommonTests(unittest.TestCase):
             self.assertIn("- platform: " + name, text)
         for runner in ("windows-2025", "ubuntu-24.04", "macos-15"):
             self.assertIn("runner: " + runner, text)
+
+
+class TemplateTests(unittest.TestCase):
+    def _archive(self, root: Path) -> Path:
+        path = root / "templates.tpz"
+        manifest = load_manifest(HERE / "manifest.json")
+        with zipfile.ZipFile(path, "x") as archive:
+            for target in manifest["platforms"].values():
+                info = zipfile.ZipInfo(target["templateEntry"])
+                info.create_system = 3
+                info.external_attr = (stat.S_IFREG | 0o644) << 16
+                archive.writestr(info, target["templateEntry"].encode("ascii"))
+        return path
+
+    def _project(self, root: Path, settings: str) -> Path:
+        project = root / "project"
+        project.mkdir()
+        (project / "export_presets.cfg").write_bytes(
+            (REPOSITORY / "game" / "export_presets.cfg").read_bytes())
+        (project / "project.godot").write_text(settings, encoding="utf-8")
+        return project
+
+    def test_macos_template_uses_private_home_standard_versioned_location(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            target = manifest["platforms"]["macos-universal"]
+            environment = isolated_environment(work / "profile")
+            actual = extract_private_template(self._archive(work), target, manifest["engine"], work, environment)
+            expected = (work / "profile" / "home" / "Library" / "Application Support" / "Godot"
+                        / "export_templates" / "4.7.2.stable" / "macos.zip")
+            self.assertEqual(actual, expected)
+            self.assertEqual(actual.read_bytes(), target["templateEntry"].encode("ascii"))
+            self.assertFalse((work / "templates" / "macos.zip").exists())
+            self.assertFalse((Path(environment["XDG_DATA_HOME"]) / "Godot" / "export_templates").exists())
+
+    def test_other_platform_templates_keep_owned_template_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            archive = self._archive(work)
+            for platform in ("windows-x86_64", "linux-x86_64"):
+                with self.subTest(platform=platform):
+                    target = manifest["platforms"][platform]
+                    target = dict(target)
+                    if target["buildType"] == "debug":
+                        target["templateSha256"] = hashlib.sha256(target["templateEntry"].encode("ascii")).hexdigest()
+                    actual = extract_private_template(archive, target, manifest["engine"], work, {})
+                    self.assertEqual(actual, work / "templates" / relative_name(target["templateEntry"]).name)
+                    self.assertEqual(actual.read_bytes(), target["templateEntry"].encode("ascii"))
+
+    def test_macos_template_rejects_relative_or_non_private_home(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            archive = self._archive(work)
+            for home in ("", "relative-home", str(work), str(work.parent / "outside"),
+                         str(work / "profile" / ".." / ".." / "outside")):
+                with self.subTest(home=home), self.assertRaises(ReleaseError):
+                    extract_private_template(archive, manifest["platforms"]["macos-universal"],
+                                             manifest["engine"], work, {"HOME": home})
+            self.assertEqual(list(work.iterdir()), [archive])
+
+    def test_macos_template_does_not_fall_back_to_host_home(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            archive = self._archive(work)
+            with self.assertRaises(KeyError):
+                extract_private_template(archive, manifest["platforms"]["macos-universal"],
+                                         manifest["engine"], work, {})
+            self.assertEqual(list(work.iterdir()), [archive])
+
+    def test_private_template_refuses_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            target = manifest["platforms"]["macos-universal"]
+            archive = self._archive(work)
+            environment = isolated_environment(work / "profile")
+            installed = extract_private_template(archive, target, manifest["engine"], work, environment)
+            original = installed.read_bytes()
+            with self.assertRaises(ReleaseError):
+                extract_private_template(archive, target, manifest["engine"], work, environment)
+            self.assertEqual(installed.read_bytes(), original)
+
+    def test_macos_private_preset_requires_astc_and_keeps_ad_hoc_signing(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            target = manifest["platforms"]["macos-universal"]
+            environment = isolated_environment(work / "profile")
+            template = extract_private_template(self._archive(work), target, manifest["engine"], work, environment)
+            project = self._project(work, "[rendering]\ntextures/vram_compression/import_etc2_astc=true\n")
+            original_settings = (project / "project.godot").read_bytes()
+            configure_private_preset(project, target, template, project_identity(REPOSITORY / "game"))
+            preset = (project / "export_presets.cfg").read_text(encoding="utf-8")
+            self.assertEqual(setting(preset, "preset.2.options", "custom_template/release"), str(template))
+            self.assertEqual(setting(preset, "preset.2.options", "codesign/codesign"), 1)
+            self.assertEqual(setting(preset, "preset.2.options", "notarization/notarization"), 0)
+            self.assertEqual(setting(preset, "preset.2.options", "binary_format/architecture"), "universal")
+            self.assertEqual((project / "project.godot").read_bytes(), original_settings)
+
+    def test_macos_private_preset_rejects_missing_disabled_or_nonboolean_astc(self) -> None:
+        values = ("", "false", "1", "1.0", '"true"',
+                  "true\ntextures/vram_compression/import_etc2_astc=true")
+        for value in values:
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as temporary:
+                work = Path(temporary).resolve()
+                settings = "[rendering]\n"
+                if value:
+                    settings += "textures/vram_compression/import_etc2_astc=" + value + "\n"
+                project = self._project(work, settings)
+                original = (project / "export_presets.cfg").read_bytes()
+                target = load_manifest(HERE / "manifest.json")["platforms"]["macos-universal"]
+                with self.assertRaises(ReleaseError):
+                    configure_private_preset(project, target, work / "macos.zip",
+                                             project_identity(REPOSITORY / "game"))
+                self.assertEqual((project / "export_presets.cfg").read_bytes(), original)
+
+    def test_release_project_enables_astc_without_changing_renderer(self) -> None:
+        settings = (REPOSITORY / "game" / "project.godot").read_text(encoding="utf-8")
+        self.assertIs(setting(settings, "rendering", "textures/vram_compression/import_etc2_astc"), True)
+        self.assertEqual(setting(settings, "rendering", "renderer/rendering_method"), "forward_plus")
+        self.assertEqual(setting(settings, "rendering", "renderer/rendering_method.mobile"), "forward_plus")
+        self.assertIs(setting(settings, "rendering", "rendering_device/fallback_to_opengl3"), False)
+
+    def test_selected_template_option_export_flag_and_metadata_agree(self) -> None:
+        manifest = load_manifest(HERE / "manifest.json")
+        identity = project_identity(REPOSITORY / "game")
+        for platform, expected_mode in (("windows-x86_64", "release"), ("linux-x86_64", "debug"),
+                                        ("macos-universal", "release")):
+            with self.subTest(platform=platform), tempfile.TemporaryDirectory() as temporary:
+                work = Path(temporary).resolve()
+                target = manifest["platforms"][platform]
+                project = self._project(work, "[rendering]\ntextures/vram_compression/import_etc2_astc=true\n")
+                template = work / relative_name(target["templateEntry"]).name
+                configure_private_preset(project, target, template, identity)
+                text = (project / "export_presets.cfg").read_text(encoding="utf-8")
+                section = "preset." + str(target["presetIndex"]) + ".options"
+                self.assertEqual(setting(text, section, "custom_template/" + expected_mode), str(template))
+                other_mode = "release" if expected_mode == "debug" else "debug"
+                self.assertEqual(setting(text, section, "custom_template/" + other_mode), "")
+                command = export_arguments(work / "editor", project, work / "payload", target)
+                self.assertEqual(command[4:6], ["--export-" + expected_mode, target["preset"]])
+                self.assertNotIn("--export-" + other_mode, command)
+                variant = build_variant(target, identity)
+                self.assertEqual(variant["buildType"], expected_mode)
+                if expected_mode == "debug":
+                    self.assertEqual(variant["templateEntry"], "templates/linux_debug.x86_64")
+                    self.assertEqual(variant["templateSha256"], target["templateSha256"])
+                    self.assertEqual(variant["engineWorkaround"],
+                                     "https://github.com/godotengine/godot/issues/87626")
+                else:
+                    self.assertEqual(variant, {"buildType": "release", "templateEntry": None,
+                                               "templateSha256": None, "engineWorkaround": None})
+
+    def test_debug_variant_is_restricted_to_linux_preview_versions(self) -> None:
+        manifest = load_manifest(HERE / "manifest.json")
+        linux = manifest["platforms"]["linux-x86_64"]
+        identity = project_identity(REPOSITORY / "game")
+        with self.assertRaises(ReleaseError):
+            build_variant(linux, {**identity, "projectVersion": "0.4.0"})
+        for host in ("win32", "darwin"):
+            with self.subTest(host=host), self.assertRaises(ReleaseError):
+                build_variant({**linux, "host": host}, identity)
+
+    def test_linux_debug_template_bytes_must_match_the_official_pin(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve()
+            manifest = load_manifest(HERE / "manifest.json")
+            target = manifest["platforms"]["linux-x86_64"]
+            archive = self._archive(work)
+            with self.assertRaisesRegex(ReleaseError, "pin oficial"):
+                extract_private_template(archive, target, manifest["engine"], work, {})
+
+    def test_linux_readme_discloses_debug_workaround_without_performance_claims(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            payload = root / "payload"
+            payload.mkdir()
+            notice = root / "synthetic-notice.txt"
+            notice.write_text("synthetic unit notice", encoding="utf-8")
+            with mock.patch("tools.release.build.obtain", return_value=notice):
+                _notices(root, payload, load_manifest(HERE / "manifest.json"), root / "cache", "linux-x86_64")
+            readme = (payload / "README_ES.txt").read_text(encoding="utf-8")
+            self.assertIn("plantilla DEBUG oficial de Godot 4.7.2", readme)
+            self.assertIn("https://github.com/godotengine/godot/issues/87626", readme)
+            self.assertIn("optimizado ni acredita FPS", readme)
+            self.assertIn("Popup nativo, UX y los smokes completos", readme)
 
 
 class ArchiveTests(unittest.TestCase):

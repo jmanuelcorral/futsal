@@ -31,6 +31,7 @@ from .source import (
 HERE = Path(__file__).resolve().parent
 PLATFORMS = ("windows-x86_64", "linux-x86_64", "macos-universal")
 STAGES = ("source-legacy", "source-gameplay", "packaged-legacy", "packaged-gameplay")
+BUILD_PROVENANCE_FIELDS = ("templateEntry", "templateSha256", "engineWorkaround")
 
 
 def preserve_inventory(repository: Path) -> dict[str, str]:
@@ -88,6 +89,31 @@ def _set_option(text: str, section: str, key: str, value: Any) -> str:
     return "\n".join(lines) + "\n"
 
 
+def build_variant(target: dict[str, Any], identity: dict[str, Any]) -> dict[str, Any]:
+    mode = target["buildType"]
+    require(mode in ("release", "debug"), "Tipo de build desconocido.")
+    result = {"buildType": mode, **dict.fromkeys(BUILD_PROVENANCE_FIELDS)}
+    if mode == "debug":
+        require(target["host"] == "linux" and identity["projectVersion"].endswith("-preview"),
+                "La plantilla debug solo esta autorizada para una version preview Linux.")
+        result.update({key: target[key] for key in BUILD_PROVENANCE_FIELDS})
+    return result
+
+
+def _validate_build_variant(metadata: dict[str, Any], variant: dict[str, Any], label: str) -> None:
+    require(type(metadata) is dict, f"{label}: se exige un objeto de metadata.")
+    for key, expected in variant.items():
+        require(json_equal(metadata.get(key), expected),
+                f"{label}: {key} no corresponde a la variante autorizada.")
+
+
+def export_arguments(editor: Path, project: Path, payload: Path, target: dict[str, Any]) -> list[str]:
+    mode = target["buildType"]
+    require(mode in ("release", "debug"), "Tipo de exportacion desconocido.")
+    return [str(editor), "--headless", "--path", str(project), "--export-" + mode,
+            target["preset"], str(payload / target["exportName"])]
+
+
 def configure_private_preset(project: Path, target: dict[str, Any], template: Path,
                              identity: dict[str, Any]) -> None:
     path = project / "export_presets.cfg"
@@ -96,11 +122,15 @@ def configure_private_preset(project: Path, target: dict[str, Any], template: Pa
     require(setting(text, f"preset.{index}", "name") == target["preset"], "Nombre de preset incorrecto.")
     require(setting(text, f"preset.{index}.options", "binary_format/architecture") ==
             ("universal" if target["host"] == "darwin" else "x86_64"), "Arquitectura de preset incorrecta.")
-    text = _set_option(text, f"preset.{index}.options", "custom_template/release", str(template))
+    mode = build_variant(target, identity)["buildType"]
+    text = _set_option(text, f"preset.{index}.options", "custom_template/" + mode, str(template))
     if target["host"] == "darwin":
         require(setting(text, f"preset.{index}.options", "codesign/codesign") == 1 and
                 setting(text, f"preset.{index}.options", "notarization/notarization") == 0,
                 "macOS exige ad-hoc local, sin notarizacion ni credenciales.")
+        project_settings = (project / "project.godot").read_text(encoding="utf-8")
+        require(setting(project_settings, "rendering", "textures/vram_compression/import_etc2_astc") is True,
+                "macOS Universal exige textures/vram_compression/import_etc2_astc=true antes de importar.")
         numeric_version = identity["projectVersion"].split("-")[0]
         for key in ("application/short_version", "application/version"):
             text = _set_option(text, f"preset.{index}.options", key, numeric_version)
@@ -122,6 +152,24 @@ def isolated_environment(profile: Path) -> dict[str, str]:
     environment["PYTHONIOENCODING"] = "utf-8"
     environment["NO_COLOR"] = "1"
     return environment
+
+
+def extract_private_template(archive: Path, target: dict[str, Any], engine: dict[str, Any],
+                             work: Path, environment: dict[str, str]) -> Path:
+    directory = work / "templates"
+    name = relative_name(target["templateEntry"]).name
+    if target["host"] == "darwin":
+        home = Path(environment["HOME"])
+        require(home.is_absolute(), "macOS exige un HOME privado absoluto.")
+        home = inside(work, home)
+        require(name == "macos.zip", "macOS exige el template oficial macos.zip.")
+        # Godot busca primero el ZIP estandar incluso con custom_template/release.
+        directory = (home / "Library" / "Application Support" / "Godot" / "export_templates"
+                     / (engine["version"] + ".stable"))
+    template = extract_entry(archive, target["templateEntry"], directory / name)
+    if target["buildType"] == "debug":
+        require(digest(template) == target["templateSha256"], "La plantilla debug no coincide con el pin oficial.")
+    return template
 
 
 def native_executable(payload: Path, target: dict[str, Any]) -> Path:
@@ -300,7 +348,9 @@ def inspect_packaged_payload(archive_path: Path, target: dict[str, Any], metadat
             "platform", "buildType", "commit", "sourceSnapshotSha256", "engine", "engineEdition",
             "signing", "projectLicense", "licensePolicy", "validationEvidenceFile", "limitations",
         }
-        require(set(embedded) == required and all(json_equal(metadata[key], value) for key, value in embedded.items()),
+        _validate_build_variant(embedded, build_variant(target, metadata), "BUILD.json")
+        require(required <= set(embedded) <= required | set(BUILD_PROVENANCE_FIELDS) and
+                all(json_equal(metadata[key], embedded[key]) for key in required),
                 "BUILD.json y evidencia discrepan.")
         for item in manifest["licenses"]:
             require(contents[item["name"]]["bytes"] == item["bytes"] and
@@ -362,6 +412,12 @@ def _notices(repository: Path, payload: Path, manifest: dict[str, Any], cache: P
         message += "\nExtraer todo el ZIP y abrir Futsal.exe. Sin firma Authenticode.\n"
     elif platform_id == "linux-x86_64":
         message += "\nExtraer conservando permisos y mantener Futsal.pck junto a Futsal.x86_64.\nEjecutar ./Futsal.x86_64; requiere entorno grafico/GPU compatible para jugar.\n"
+        if manifest["platforms"][platform_id]["buildType"] == "debug":
+            message += (
+                "\nEsta preview Linux usa la plantilla DEBUG oficial de Godot 4.7.2 como workaround\n"
+                "de https://github.com/godotengine/godot/issues/87626. No es un template release\n"
+                "optimizado ni acredita FPS. Conserva Popup nativo, UX y los smokes completos.\n"
+            )
     else:
         message += (
             "\nExtraer con una herramienta que preserve permisos y enlaces del bundle Futsal.app.\n"
@@ -386,6 +442,7 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
     require(platform.machine().lower() in (("amd64", "x86_64") if sys.platform != "darwin" else ("arm64", "x86_64")),
             "Arquitectura del runner no autorizada.")
     identity = project_identity(repository / "game", tag)
+    variant = build_variant(target, identity)
     actual_commit = commit_identity(repository, commit, allow_uncommitted)
     contract = read_json(HERE / "smoke-contract.json")
     validate_producers(repository / "game", contract, identity)
@@ -416,12 +473,12 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
                 require(editor.is_file(), f"Editor oficial ausente: {editor}")
                 if sys.platform != "win32":
                     require(editor.stat().st_mode & 0o111 != 0, "ZIP del editor perdio exec bit.")
-                template = extract_entry(templates, target["templateEntry"], work / "templates" / Path(target["templateEntry"]).name)
+                environment = isolated_environment(work / "profile")
+                template = extract_private_template(templates, target, manifest["engine"], work, environment)
                 project = work / "project"
                 shutil.copytree(repository / "game", project, ignore=shutil.ignore_patterns(".godot"))
                 require(source_snapshot(project) == original, "La copia de fuente no coincide con el checkout.")
                 configure_private_preset(project, target, template, identity)
-                environment = isolated_environment(work / "profile")
                 version = recorded_process([str(editor), "--version"], work, proof / "engine-version",
                                            timeout=30, environment=environment)
                 require(godot_output(version).strip() == manifest["engine"]["versionOutput"], "Motor distinto al fijado.")
@@ -435,16 +492,15 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
                 payload = work / "payload"
                 payload.mkdir()
                 exported = recorded_process(
-                    [str(editor), "--headless", "--path", str(project), "--export-release",
-                     target["preset"], str(payload / target["exportName"])],
-                    project, proof / "export-release", timeout=300, environment=environment,
+                    export_arguments(editor, project, payload, target),
+                    project, proof / ("export-" + variant["buildType"]), timeout=300, environment=environment,
                 )
                 godot_output(exported)
                 signing = validate_native_payload(payload, target, proof, environment, "export")
                 project_license = _notices(repository, payload, manifest, cache, platform_id)
                 package_name = f"futsal-{identity['tag']}-{platform_id}"
                 build_info = {
-                    "schemaVersion": 1, **identity, "platform": platform_id, "buildType": "release",
+                    "schemaVersion": 1, **identity, "platform": platform_id, **variant,
                     "commit": actual_commit, "sourceSnapshotSha256": snapshot_digest(original),
                     "engine": manifest["engine"]["versionOutput"], "engineEdition": "standard",
                     "signing": signing, "projectLicense": project_license,
@@ -453,6 +509,9 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
                     "limitations": ["Sin aceptacion humana, artistica ni de FPS.",
                                     "CI prueba headless en la arquitectura nativa del runner; no todos los CPUs de Universal2."],
                 }
+                if variant["buildType"] == "debug":
+                    build_info["limitations"].append(
+                        "Preview Linux con template debug oficial por Godot #87626; no afirma optimizacion ni FPS.")
                 write_json(payload / "BUILD.json", build_info)
                 ready = work / "ready"
                 ready.mkdir()
@@ -535,12 +594,14 @@ def _audit_candidate(repository: Path, archive: Path, *, commit: str | None,
     platform_id = metadata["platform"]
     require(platform_id in PLATFORMS, "Plataforma de candidato desconocida.")
     target = manifest["platforms"][platform_id]
+    variant = build_variant(target, identity)
+    _validate_build_variant(metadata, variant, "Metadata de candidato")
     require(archive.name == f"futsal-{identity['tag']}-{platform_id}.zip", "Nombre de paquete incorrecto.")
     checksum = digest(archive)
     require(archive.with_suffix(".sha256").read_text(encoding="ascii") == checksum + "  " + archive.name + "\n",
             "Checksum adjunto incorrecto.")
     require(metadata["tag"] == identity["tag"] and metadata["projectVersion"] == identity["projectVersion"]
-            and metadata["buildType"] == "release" and metadata["engine"] == manifest["engine"]["versionOutput"]
+            and metadata["engine"] == manifest["engine"]["versionOutput"]
             and metadata["engineEdition"] == "standard", "Version/motor/clase de candidato incorrectos.")
     require(metadata["archive"] == archive.name and metadata["archiveSha256"] == checksum and
             metadata["archiveBytes"] == archive.stat().st_size and json_equal(verify_zip(archive), metadata["contents"]),
@@ -577,11 +638,15 @@ def _audit_candidate(repository: Path, archive: Path, *, commit: str | None,
     import_process, _, _ = process_files(proof_root / "import")
     require(all(flag in import_process["arguments"] for flag in ("--headless", "--editor", "--import")),
             "Falta importacion nativa de fuentes.")
-    export_process, _, _ = process_files(proof_root / "export-release")
+    export_stage = "export-" + variant["buildType"]
+    export_flag = "--" + export_stage
+    export_process, _, _ = process_files(proof_root / export_stage)
     export_arguments = export_process["arguments"]
-    require(export_arguments.count("--export-release") == 1 and "--export-debug" not in export_arguments and
-            export_arguments[export_arguments.index("--export-release") + 1] == target["preset"],
-            "La exportacion archivada no fue release del preset requerido.")
+    other_flags = {"--export-debug", "--export-release"} - {export_flag}
+    require(export_arguments.count(export_flag) == 1 and not other_flags.intersection(export_arguments) and
+            export_arguments.index(export_flag) + 2 < len(export_arguments) and
+            export_arguments[export_arguments.index(export_flag) + 1] == target["preset"],
+            "La exportacion archivada no coincide con el modo y preset declarados.")
     for stage in validation["stages"]:
         require(stage["modes"] == [0, 1] and all(type(mode) is int for mode in stage["modes"]) and
                 stage["headless"] is True and stage["renderedValidated"] is False and stage["savedPngs"] == 0,
@@ -629,7 +694,10 @@ def verify_collection(repository: Path, directory: Path, commit: str, tag: str |
         checksum = metadata["archiveSha256"]
         source_hashes.add(metadata["sourceSnapshotSha256"])
         entries.append({"platform": platform_id, "archive": archive.name, "sha256": checksum,
-                        "bytes": archive.stat().st_size})
+                        "bytes": archive.stat().st_size, "buildType": metadata["buildType"],
+                        "templateEntry": metadata.get("templateEntry"),
+                        "templateSha256": metadata.get("templateSha256"),
+                        "engineWorkaround": metadata.get("engineWorkaround")})
     require(len(source_hashes) == 1, "Las tres plataformas no consumieron la misma fuente.")
     return {"schemaVersion": 1, "ok": True, **identity, "commit": commit,
             "sourceSnapshotSha256": next(iter(source_hashes)), "archives": entries,

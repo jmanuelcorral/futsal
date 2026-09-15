@@ -18,6 +18,7 @@
   "platforms": {
     "windows-x86_64": {
       "host": "win32",
+      "buildType": "release",
       "preset": "Windows Desktop",
       "presetIndex": 0,
       "editorExecutable": "Godot_v4.7.2-stable_win64.exe",
@@ -33,10 +34,13 @@
     },
     "linux-x86_64": {
       "host": "linux",
+      "buildType": "debug",
       "preset": "Linux x86_64",
       "presetIndex": 1,
       "editorExecutable": "Godot_v4.7.2-stable_linux.x86_64",
-      "templateEntry": "templates/linux_release.x86_64",
+      "templateEntry": "templates/linux_debug.x86_64",
+      "templateSha256": "1a291d3d15e4180b60b0af96cf6458f11fe143636d76575ddf1e23d1a3f24f2e",
+      "engineWorkaround": "https://github.com/godotengine/godot/issues/87626",
       "exportName": "Futsal.x86_64",
       "architectures": ["x86_64"],
       "editor": {
@@ -48,6 +52,7 @@
     },
     "macos-universal": {
       "host": "darwin",
+      "buildType": "release",
       "preset": "macOS Universal",
       "presetIndex": 2,
       "editorExecutable": "Godot.app/Contents/MacOS/Godot",
