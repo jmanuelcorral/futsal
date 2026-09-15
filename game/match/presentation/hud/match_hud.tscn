@@ -1,0 +1,788 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://match/presentation/hud/match_hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="Style_broadcast"]
+bg_color = Color(0.039, 0.063, 0.098, 0.97)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.39, 0.46, 0.55, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.10, 0.145, 0.205, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.41, 0.50, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="Style_hover"]
+bg_color = Color(0.16, 0.215, 0.285, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.60, 0.67, 0.74, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="Style_pressed"]
+bg_color = Color(0.23, 0.29, 0.35, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.86, 0.79, 0.60, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="Style_focus"]
+draw_center = false
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.94, 0.85, 0.64, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="Style_charge_bg"]
+bg_color = Color(0.21, 0.27, 0.34, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_charge_fill"]
+bg_color = Color(0.94, 0.85, 0.64, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[sub_resource type="Theme" id="Theme_hud"]
+default_font_size = 20
+Button/colors/font_color = Color(0.96, 0.96, 0.94, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/font_sizes/font_size = 22
+Button/styles/normal = SubResource("Style_button")
+Button/styles/hover = SubResource("Style_hover")
+Button/styles/pressed = SubResource("Style_pressed")
+Button/styles/focus = SubResource("Style_focus")
+Label/colors/font_color = Color(0.96, 0.96, 0.94, 1)
+PanelContainer/styles/panel = SubResource("Style_broadcast")
+ProgressBar/styles/background = SubResource("Style_charge_bg")
+ProgressBar/styles/fill = SubResource("Style_charge_fill")
+
+[sub_resource type="StyleBoxFlat" id="Style_home_chip"]
+resource_local_to_scene = true
+bg_color = Color(0.09, 0.184, 0.302, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.96, 0.94, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_left = 22
+corner_radius_bottom_right = 22
+
+[sub_resource type="StyleBoxFlat" id="Style_badge"]
+bg_color = Color(0.86, 0.79, 0.60, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="Style_modal"]
+bg_color = Color(0.039, 0.063, 0.098, 1)
+border_width_left = 1
+border_width_top = 3
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.86, 0.79, 0.60, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+
+[node name="MatchHUD" type="CanvasLayer"]
+process_mode = 3
+layer = 20
+script = ExtResource("1_hud")
+
+[node name="Frame" type="Control" parent="."]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+theme = SubResource("Theme_hud")
+
+[node name="Scoreboard" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 684.0
+offset_bottom = 134.0
+mouse_filter = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/Scoreboard"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Frame/Scoreboard/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="TrainingLabel" type="Label" parent="Frame/Scoreboard/Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 18
+text = "1v1 de regresión"
+
+[node name="PrototypeBadge" type="Label" parent="Frame/Scoreboard/Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.039, 0.063, 0.098, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_badge")
+text = "G1 · PROTOTIPO"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MatchRow" type="HBoxContainer" parent="Frame/Scoreboard/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="HomeTeam" type="HBoxContainer" parent="Frame/Scoreboard/Rows/MatchRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="HomeChip" type="Panel" parent="Frame/Scoreboard/Rows/MatchRow/HomeTeam"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_home_chip")
+
+[node name="HomeDorsal" type="Label" parent="Frame/Scoreboard/Rows/MatchRow/HomeTeam/HomeChip"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+text = "07"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Identity" type="VBoxContainer" parent="Frame/Scoreboard/Rows/MatchRow/HomeTeam"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="HomeName" type="Label" parent="Frame/Scoreboard/Rows/MatchRow/HomeTeam/Identity"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 22
+text = "LOCAL"
+
+[node name="HomeCue" type="Label" parent="Frame/Scoreboard/Rows/MatchRow/HomeTeam/Identity"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "TÚ · CÍRCULO"
+
+[node name="Score" type="Label" parent="Frame/Scoreboard/Rows/MatchRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(158, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 36
+text = "0 – 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AwayTeam" type="HBoxContainer" parent="Frame/Scoreboard/Rows/MatchRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="AwayChip" type="Control" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="AwayFill" type="Polygon2D" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam/AwayChip"]
+unique_name_in_owner = true
+polygon = PackedVector2Array(22, 1, 43, 22, 22, 43, 1, 22)
+color = Color(0.933, 0.91, 0.847, 1)
+antialiased = true
+
+[node name="Outline" type="Line2D" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam/AwayChip"]
+points = PackedVector2Array(22, 1, 43, 22, 22, 43, 1, 22)
+width = 2.0
+default_color = Color(0.96, 0.96, 0.94, 1)
+closed = true
+antialiased = true
+
+[node name="AwayDorsal" type="Label" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam/AwayChip"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
+text = "11"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Identity" type="VBoxContainer" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="AwayName" type="Label" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam/Identity"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 22
+text = "VISITA"
+
+[node name="AwayCue" type="Label" parent="Frame/Scoreboard/Rows/MatchRow/AwayTeam/Identity"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "IA · ROMBO"
+
+[node name="Clock" type="Label" parent="Frame/Scoreboard/Rows/MatchRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+theme_override_font_sizes/font_size = 26
+text = "00:00"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="PauseButton" type="Button" parent="Frame"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -208.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 72.0
+grow_horizontal = 0
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "Pausa · Esc / Menú"
+
+[node name="EventPanel" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 24.0
+offset_top = 146.0
+offset_right = 684.0
+offset_bottom = 220.0
+mouse_filter = 2
+
+[node name="EventText" type="Label" parent="Frame/EventPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 2
+
+[node name="SelectionPanel" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -264.0
+offset_top = 84.0
+offset_right = -24.0
+offset_bottom = 164.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/SelectionPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="SelectedActor" type="Label" parent="Frame/SelectionPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+theme_override_font_sizes/font_size = 18
+text = "CONTROL · —\nSin selección"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FoulTotals" type="Label" parent="Frame/SelectionPanel/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = ""
+tooltip_text = "Contadores confirmados. Un penalti no incrementa acumuladas (2025/26)."
+horizontal_alignment = 1
+autowrap_mode = 3
+max_lines_visible = 3
+
+[node name="RestartPanel" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 24.0
+offset_top = 146.0
+offset_right = 660.0
+offset_bottom = 258.0
+mouse_filter = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/RestartPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="RestartTitle" type="Label" parent="Frame/RestartPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = ""
+
+[node name="RestartClock" type="Label" parent="Frame/RestartPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = ""
+
+[node name="RestartDetail" type="Label" parent="Frame/RestartPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = ""
+autowrap_mode = 3
+max_lines_visible = 2
+
+[node name="HelpPanel" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -252.0
+offset_right = 608.0
+offset_bottom = -24.0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="RestartFeedbackPanel" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -288.0
+offset_top = -318.0
+offset_right = -24.0
+offset_bottom = -158.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/RestartFeedbackPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="RestartAimHint" type="Label" parent="Frame/RestartFeedbackPanel/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 4
+
+[node name="RestartFeedback" type="Label" parent="Frame/RestartFeedbackPanel/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/HelpPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="ControlsContext" type="Label" parent="Frame/HelpPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "CONTROLES · TECLADO / XBOX"
+
+[node name="Controls" type="GridContainer" parent="Frame/HelpPanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="MoveKeys" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = "WASD / Flechas / Stick"
+
+[node name="MoveHint" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+text = "Mover / Orientar"
+
+[node name="PassKeys" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = "J / A"
+
+[node name="PassHint" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+text = "Pase / Cambiar jugador"
+
+[node name="ShootKeys" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = "K / B"
+
+[node name="ShootHint" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+text = "Tiro / Robo de pie"
+
+[node name="DribbleKeys" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = "L / X"
+
+[node name="DribbleHint" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+text = "Enganche / cambio de ritmo"
+
+[node name="SprintKeys" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = "Shift / RT"
+
+[node name="SprintHint" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+text = "Sprint"
+
+[node name="CloseControlKeys" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+text = "Ctrl / LT"
+
+[node name="CloseControlHint" type="Label" parent="Frame/HelpPanel/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+text = "Control / Contención"
+
+[node name="ChargePanel" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -132.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/ChargePanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Frame/ChargePanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Frame/ChargePanel/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+text = "TIRO · K / B"
+
+[node name="ChargeValue" type="Label" parent="Frame/ChargePanel/Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+theme_override_font_sizes/font_size = 18
+text = "0 %"
+
+[node name="ShotCharge" type="ProgressBar" parent="Frame/ChargePanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+mouse_filter = 2
+max_value = 1.0
+step = 0.0
+show_percentage = false
+
+[node name="Hint" type="Label" parent="Frame/ChargePanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "Mantén para cargar · Suelta para tirar"
+autowrap_mode = 3
+max_lines_visible = 2
+
+[node name="PauseOverlay" type="Control" parent="Frame"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="Frame/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.016, 0.027, 0.047, 0.78)
+
+[node name="Center" type="CenterContainer" parent="Frame/PauseOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ModalPanel" type="PanelContainer" parent="Frame/PauseOverlay/Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(476, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_modal")
+
+[node name="Rows" type="VBoxContainer" parent="Frame/PauseOverlay/Center/ModalPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="ModalTitle" type="Label" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "PAUSA"
+horizontal_alignment = 1
+autowrap_mode = 3
+max_lines_visible = 2
+
+[node name="ModalDetail" type="Label" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 20
+text = "Entrenamiento · G1"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 3
+
+[node name="ResumeButton" type="Button" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Continuar"
+
+[node name="RestartButton" type="Button" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Reiniciar entrenamiento"
+
+[node name="DevelopmentButton" type="Button" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Desarrollo"
+
+[node name="QuitButton" type="Button" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Salir"
+
+[node name="ModalHint" type="Label" parent="Frame/PauseOverlay/Center/ModalPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "Flechas / Stick · Elegir     Intro / A · Aceptar
+Esc / B / Menú · Continuar"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="EventTimer" type="Timer" parent="."]
+wait_time = 2.5
+one_shot = true
+ignore_time_scale = true
+
+[node name="RestartFeedbackTimer" type="Timer" parent="."]
+wait_time = 1.5
+one_shot = true
+ignore_time_scale = true
+
+[connection signal="pressed" from="Frame/PauseButton" to="." method="_on_pause_pressed"]
+[connection signal="pressed" from="Frame/PauseOverlay/Center/ModalPanel/Rows/ResumeButton" to="." method="_on_resume_pressed"]
+[connection signal="pressed" from="Frame/PauseOverlay/Center/ModalPanel/Rows/RestartButton" to="." method="_on_restart_pressed"]
+[connection signal="pressed" from="Frame/PauseOverlay/Center/ModalPanel/Rows/DevelopmentButton" to="." method="_on_development_pressed"]
+[connection signal="pressed" from="Frame/PauseOverlay/Center/ModalPanel/Rows/QuitButton" to="." method="_on_quit_pressed"]
+[connection signal="timeout" from="EventTimer" to="." method="_on_event_timeout"]
+[connection signal="timeout" from="RestartFeedbackTimer" to="." method="_on_restart_feedback_timeout"]

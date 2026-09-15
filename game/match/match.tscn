@@ -1,0 +1,40 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://match/match.gd" id="1_match"]
+[ext_resource type="Script" path="res://match/simulation/match_simulation.gd" id="2_simulation"]
+[ext_resource type="Script" path="res://match/presentation/arena/match_arena.gd" id="3_arena"]
+[ext_resource type="Script" path="res://match/presentation/camera/broadcast_camera.gd" id="4_camera"]
+[ext_resource type="Script" path="res://match/presentation/input/match_input.gd" id="5_input"]
+[ext_resource type="Script" path="res://match/presentation/ball/ball_view.gd" id="6_ball"]
+[ext_resource type="PackedScene" path="res://match/presentation/hud/match_hud.tscn" id="7_hud"]
+[ext_resource type="PackedScene" path="res://match/presentation/development/match_dev_menu.tscn" id="8_development"]
+[ext_resource type="PackedScene" path="res://match/presentation/aim/world_aim_guide.tscn" id="9_aim"]
+
+[node name="Match" type="Node3D"]
+process_physics_priority = 10
+script = ExtResource("1_match")
+
+[node name="Simulation" type="Node3D" parent="."]
+script = ExtResource("2_simulation")
+
+[node name="Arena" type="Node3D" parent="."]
+script = ExtResource("3_arena")
+
+[node name="Athletes" type="Node3D" parent="."]
+
+[node name="BallView" type="Node3D" parent="."]
+script = ExtResource("6_ball")
+
+[node name="WorldAimGuide" parent="BallView" instance=ExtResource("9_aim")]
+
+[node name="BroadcastCamera" type="Camera3D" parent="."]
+current = true
+script = ExtResource("4_camera")
+
+[node name="MatchInput" type="Node" parent="."]
+process_physics_priority = -10
+script = ExtResource("5_input")
+
+[node name="MatchHUD" parent="." instance=ExtResource("7_hud")]
+
+[node name="MatchDevMenu" parent="." instance=ExtResource("8_development")]

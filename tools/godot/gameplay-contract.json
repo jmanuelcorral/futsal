@@ -1,0 +1,132 @@
+{
+  "projectVersion": "0.4.0-preview",
+  "inputSchemaVersion": 3,
+  "repositoryPlan": "docs\\DEVELOPMENT_PLAN.md",
+  "bindingOverridesStatus": "read canonical DEVELOPMENT_PLAN section 4.3.1-4.3.10 including accepted overrides",
+  "canonicalSectionSha256": "742ceff7db550b834b42c265265336accdd56e9783f8b6e47c5baf26b9df06a1",
+  "canonicalHashFormat": "UTF-8, LF line endings, trimmed section 4.3 through before section 5",
+  "runtimeProtocolStatus": "source-defined gameplay runtime decoder implemented; native validation pending",
+  "runtimeDriver": "res://diagnostics/gameplay_smoke.gd",
+  "runtimeCliFlag": "--gameplay-smoke",
+  "runtimeReportPrefix": "FUTSAL_GAMEPLAY_SMOKE",
+  "runtimeCaptureSuffix": "-gameplay-captures",
+  "runtimeCaseNames": [
+    "corner_pos_x_neg_z", "corner_pos_x_pos_z", "corner_neg_x_neg_z", "corner_neg_x_pos_z",
+    "live_charged_shot", "keeper_clearance_ready", "keeper_clearance_release",
+    "dribble_left_contact", "dribble_right_contact", "dribble_pace_contact",
+    "kick_in", "direct_free_kick", "penalty_fine_aim", "accumulated_spot_choice"
+  ],
+  "acceptanceEvidenceScope": "G01-G32 combines mandatory native suites and real production runtime; 28 cases are not 64 fabricated acceptance flags",
+  "fineAimHint": "Saque propio · Ctrl + (A/D o ←/→) / LT + stick izq. lateral: ajuste fino",
+  "fineAimMaxDegreesPerSecond": 30.0,
+  "requiredNativeTests": {
+    "ai-tactics": "game\\tests\\test_match_ai_tactics.gd",
+    "rules": "game\\tests\\test_match_rules.gd",
+    "gameplay-rules": "game\\tests\\test_match_gameplay_rules.gd",
+    "camera": "game\\tests\\test_match_camera.gd",
+    "gameplay-runtime": "game\\tests\\test_match_gameplay_runtime.gd",
+    "aim-guide": "game\\tests\\test_match_aim_guide.gd",
+    "gestures": "game\\tests\\test_match_gestures.gd"
+  },
+  "requiredWhenPresent": {},
+  "presentationReportPrefixes": {
+    "gestures": "FUTSAL_GESTURE_TESTS",
+    "visual-native": "FUTSAL_VISUAL_TESTS"
+  },
+  "legacyChecksOptionalStages": [
+    "hud", "integration", "development-menu", "preview-integration", "player-control"
+  ],
+  "acceptanceIds": [
+    "G01", "G02", "G03", "G04", "G05", "G06", "G07", "G08",
+    "G09", "G10", "G11", "G12", "G13", "G14", "G15", "G16",
+    "G17", "G18", "G19", "G20", "G21", "G22", "G23", "G24",
+    "G25", "G26", "G27", "G28", "G29", "G30", "G31", "G32"
+  ],
+  "acceptanceCriteria": {
+    "G01": "ABI estable, selección HOME/portero 2, listas IA desacopladas y efectiva exacta",
+    "G02": "Política y guardas aliadas bloquean tiro/remate disfrazado/conducción a gol; humano y AWAY conservados",
+    "G03": "Pase seguro prioritario al humano, alternativas, apoyo y salida acotada; sin bucle IA↔IA ni espera indefinida",
+    "G04": "Último toque físico, esfera completa, primer borde y precedencia de gol; rebotes legítimos",
+    "G05": "Bandas de ambos equipos: punto, sacador, colocación localizada y 5 m",
+    "G06": "Córners en cuatro esquinas: arco, adjudicación y gol directo permitido",
+    "G07": "Metas de porteros 2/3: manos, origen/velocidad reales, adversarios fuera del área",
+    "G08": "Ciclo completo; `READY` después de preparación; headless progresa sin ACK de render",
+    "G09": "Cada vencimiento reglamentario, incluido límite exacto; carga/repetición no amplían tiempo",
+    "G10": "Goles directos prohibidos, propia puerta, segundo toque y habilitación por otro jugador",
+    "G11": "Pase aceptado transfiere receptor efectivo; rechazo, tiro, pase libre e intercepción no fabrican foco",
+    "G12": "Un flanco/acción, secuencias crecientes, sin replay al cambiar foco; movimiento/sprint continuos",
+    "G13": "Propio listo apunta; rival listo permite defender/cambiar; sacador IA legal y preferencias respetadas",
+    "G14": "Cámara detrás/arriba en cuatro orientaciones; balón, sacador y opciones visibles sin paredes/redes",
+    "G15": "Entrada sostenida no rota apuntado; retorno solo tras golpeo; rechazo/pausa/vencimiento limpian el contexto",
+    "G16": "Consultas repetidas no consumen input ni mutan autoridad; ningún segundo `sample()`",
+    "G17": "Guía y lanzamiento coinciden en origen, asistencia, potencia y velocidad inicial; revalidación ante cambios reales",
+    "G18": "Guía solo propia, F1 conservado en sesión, limpieza completa y reloj independiente",
+    "G19": "Enganche a ambos lados y cambio de ritmo físicos, vulnerables y acotados; sin spam mantenido",
+    "G20": "Limpia/tardía/imprudente por contacto y velocidad relativa; roce/fallo sin contacto no sancionados",
+    "G21": "Directo y penalti de 6 m, geometría real de área y colocación reglamentaria",
+    "G22": "Contadores por equipo; sexta+, 10 m, elección longitudinal, prioridad del penalti y ausencia de barrera",
+    "G23": "Pausa congela relojes y vuelo; snapshots privados y aislamiento entre mundos",
+    "G24": "Gol/red/parada existentes, saque al equipo que encajó y cierre de regulación a 120 s sin reset terminal; única extensión según G29",
+    "G25": "Driver con escena/APIs de producción; tests antiguos de fuera adaptados, sin flag para esconder las reglas",
+    "G26": "Suites/conteos coherentes, ejecutable 0.4 independiente, hash de 0.3 intacto y revisión final Vasquez",
+    "G27": "Proyección longitudinal sobre arcos reales y desempate exacto de esquina",
+    "G28": "Acumuladas explícitas y deduplicadas, penalti sin incremento conforme al pasaje 2025/26 confirmado",
+    "G29": "Extensión exclusiva de penalti/DFKSAF, plazos distintos y terminación física sin ataque adicional",
+    "G30": "Catálogo F1 en ambos modos, cuatro orientaciones propias coherentes y conservación de preferencias",
+    "G31": "Ejecución nativa teclado/mando y 20 PNG específicos con manifiesto concordante, en salidas propias por run",
+    "G32": "Adjudicación y presentación comparten arcos de 6 m/tramo de 3.16 m; proyección longitudinal y portería física/visual 3 × 2 m coherentes"
+  },
+  "trainingExercises": {
+    "FREE_PLAY": 0, "KICK_IN": 1, "CORNER_POS_X_NEG_Z": 2, "CORNER_POS_X_POS_Z": 3,
+    "CORNER_NEG_X_NEG_Z": 4, "CORNER_NEG_X_POS_Z": 5, "GOAL_CLEARANCE": 6,
+    "DRIBBLE_CUT": 7, "DRIBBLE_PACE_CHANGE": 8, "DIRECT_FREE_KICK": 9,
+    "PENALTY_6M": 10, "ACCUMULATED_FREE_KICK": 11
+  },
+  "canonicalTiming": {
+    "physicsHz": 60, "placementMinimumTicks": 60, "cornerCameraMaximumTicks": 45,
+    "restartDeadlineTicks": 240, "regulationSeconds": 120,
+    "penaltyDeadlineTick": -1, "executableDeadlineComparison": "tick < deadline_tick"
+  },
+  "foulTuning": {
+    "foul_challenge_window_ticks": { "type": "int", "initial": 18, "minimum": 1, "maximum": 60 },
+    "foul_min_closing_speed": { "type": "float", "initial": 0.8, "minimum": 0.1, "maximum": 4.0 },
+    "foul_reckless_closing_speed": { "type": "float", "initial": 9.5, "minimum": 2.0, "maximum": 20.0 }
+  },
+  "acceptedRuleOverrides": {
+    "penaltyCountsAsAccumulatedFoul": false,
+    "indirectProjectionChangesAxis": "X",
+    "indirectProjectionPreservesAxis": "Z",
+    "penaltyRadius": 6.0, "goalPostCenterZ": 1.54, "goalPostOuterZ": 1.58, "penaltyStraightLength": 3.16,
+    "goalInteriorWidth": 3.0, "goalInteriorHeight": 2.0,
+    "cornerBoundaryTie": "goal line",
+    "extendedPeriodKinds": [6, 7],
+    "noRenderAcknowledgementForReady": true,
+    "goalKickoffFieldIds": [0, 1],
+    "originalLaunchEpisodeField": "RestartState.launch_contact_id",
+    "secondTouchUsesEpisodeIdentityNotTickGrace": true
+  },
+  "modes": [0, 1],
+  "captureWidth": 1920,
+  "captureHeight": 1080,
+  "captureDirectoryName": "gameplay-captures",
+  "captureExerciseIds": [
+    "corner-preparation-0", "corner-preparation-1", "corner-preparation-2", "corner-preparation-3",
+    "live-charged-shot", "keeper-clearance-prepared", "keeper-clearance-release",
+    "cut-left-contact", "cut-right-contact", "rhythm-contact"
+  ],
+  "captureContextRules": {
+    "corner-preparation-0": { "trainingExercise": 2, "phase": 3, "restartKind": 2, "restartStages": [2, 3], "acceptedEventRequired": false },
+    "corner-preparation-1": { "trainingExercise": 3, "phase": 3, "restartKind": 2, "restartStages": [2, 3], "acceptedEventRequired": false },
+    "corner-preparation-2": { "trainingExercise": 4, "phase": 3, "restartKind": 2, "restartStages": [2, 3], "acceptedEventRequired": false },
+    "corner-preparation-3": { "trainingExercise": 5, "phase": 3, "restartKind": 2, "restartStages": [2, 3], "acceptedEventRequired": false },
+    "live-charged-shot": { "trainingExercise": null, "phase": 1, "acceptedEventRequired": false },
+    "keeper-clearance-prepared": { "trainingExercise": 6, "phase": 3, "restartKind": 3, "restartStages": [2, 3], "selectedActor": 2, "acceptedEventRequired": false },
+    "keeper-clearance-release": { "trainingExercise": 6, "phase": 1, "restartKind": 3, "restartStages": [4], "acceptedEventRequired": true, "eventKind": 1, "launchKind": 2, "eventActor": 2 },
+    "cut-left-contact": { "trainingExercise": 7, "phase": 1, "acceptedEventRequired": true, "eventKind": 11, "gestureKind": 1 },
+    "cut-right-contact": { "trainingExercise": 7, "phase": 1, "acceptedEventRequired": true, "eventKind": 11, "gestureKind": 1 },
+    "rhythm-contact": { "trainingExercise": 8, "phase": 1, "acceptedEventRequired": true, "eventKind": 11, "gestureKind": 2 }
+  },
+  "captureIdContract": "Legacy normalized capture-helper identifiers only; actual runtime acceptance uses runtimeCaseNames and GameplayRuntimeValidation.ps1.",
+  "publicationOwner": "coordinator after verified artifact run",
+  "publicationPath": "build\\evidence\\0.4.0-preview\\gameplay"
+}

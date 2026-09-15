@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/achimala/dream-loop",
+  "branch": "main",
+  "commit": "d113b78bd8143d6c4e2b46840c1a881139bcc084",
+  "reviewedOn": "2026-09-09",
+  "license": "MIT",
+  "files": {
+    "SKILL.md": {
+      "gitBlobSha1": "f69872cfcde583be54d920ff75494b5d1befa93e",
+      "sha256": "485892328c50b4cbb64c1b19018a0fbb8be7e89236d3698583d6d12c67f51ab1",
+      "bytes": 13506
+    },
+    "LICENSE": {
+      "gitBlobSha1": "dd54a3e60d5fe9e2296c4745c5b826d74158c852",
+      "sha256": "1607e9149a254c619d0ceb4119ed9346e13048c28c1d437d80ff2837e40159da",
+      "bytes": 1070
+    }
+  },
+  "modifications": "None. Vendored files must retain exact upstream bytes.",
+  "runtimeStatus": "Skill installation only; full loop requires approved concept image or an authorized image generator, visual review, a runnable product and measured target FPS."
+}

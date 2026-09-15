@@ -1,0 +1,60 @@
+# Squad: ignore runtime state (logs, inbox, sessions)
+.squad/orchestration-log/
+.squad/log/
+.squad/decisions/inbox/
+.squad/sessions/
+.squad/.scratch/
+.squad/.cache/
+# Squad: SubSquad activation file (local to this machine)
+.squad-workstream
+
+# Local Blender/MCP toolchain: binaries, environments, logs and machine-specific paths
+tools/blender/.cache/
+tools/blender/local.json
+tools/mcp/.cache/
+tools/mcp/.venv/
+tools/mcp/local.json
+tools/mcp/copilot.local.json
+tools/mcp/runtime/
+tools/mcp/__pycache__/
+tools/blender/__pycache__/
+tools/dream-loop/.cache/
+.dream-loop/
+
+# Isolated Godot project and local verified toolchain
+game/.godot/
+tools/godot/.cache/
+tools/godot/local.json
+tools/godot/runtime/
+tools/godot/__pycache__/
+build/
+game/assets/_pipeline_probe_*.glb
+game/assets/_pipeline_probe_*.glb.import
+
+# Archived local player-control diagnostics retain their original embedded paths
+.validation/hicks-player-control/
+
+# Personal assistant/team configuration stays local, not in the public game repository.
+.copilot/
+.squad/
+.github/agents/
+.github/copilot-instructions.md
+.mcp.json
+.github/workflows/squad-heartbeat.yml
+.github/workflows/squad-issue-assign.yml
+.github/workflows/squad-triage.yml
+.github/workflows/sync-squad-labels.yml
+
+# Release tooling and credentials are never source artifacts.
+tools/release/.cache/
+tools/release/runtime/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision

@@ -1,0 +1,22 @@
+# Squad: union merge for append-only team state files
+.squad/decisions.md merge=union
+.squad/agents/*/history.md merge=union
+.squad/log/** merge=union
+.squad/orchestration-log/** merge=union
+.squad/rai/audit-trail.md merge=union
+
+# Godot source and portable asset exchange
+*.gd text eol=lf
+*.gdshader text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.glb filter=lfs diff=lfs merge=lfs -text
+
+# Vendored, hash-pinned upstream bytes must not be normalized on Windows.
+.github/skills/dream-loop/SKILL.md -text
+.github/skills/dream-loop/LICENSE -text
+
+# Godot script UIDs are source identity, not an import cache.
+*.gd.uid text eol=lf

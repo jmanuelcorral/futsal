@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://match/presentation/aim/world_aim_guide.gd" id="1_aim"]
+
+[node name="WorldAimGuide" type="Node3D"]
+script = ExtResource("1_aim")

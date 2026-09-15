@@ -1,0 +1,401 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://match/presentation/development/match_dev_menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.039, 0.063, 0.098, 1)
+border_width_left = 1
+border_width_top = 3
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.86, 0.79, 0.60, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 20.0
+content_margin_top = 16.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.10, 0.145, 0.205, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.41, 0.50, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="Style_hover"]
+bg_color = Color(0.16, 0.215, 0.285, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.60, 0.67, 0.74, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="Style_focus"]
+draw_center = false
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.94, 0.85, 0.64, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="Style_dropdown"]
+bg_color = Color(0.039, 0.063, 0.098, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.86, 0.79, 0.60, 1)
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+
+[sub_resource type="Theme" id="Theme_development"]
+default_font_size = 20
+Label/colors/font_color = Color(0.96, 0.96, 0.94, 1)
+Button/colors/font_color = Color(0.96, 0.96, 0.94, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_disabled_color = Color(0.61, 0.68, 0.76, 1)
+Button/font_sizes/font_size = 20
+Button/styles/normal = SubResource("Style_button")
+Button/styles/disabled = SubResource("Style_button")
+Button/styles/hover = SubResource("Style_hover")
+Button/styles/pressed = SubResource("Style_hover")
+Button/styles/focus = SubResource("Style_focus")
+CheckBox/colors/font_color = Color(0.96, 0.96, 0.94, 1)
+CheckBox/colors/font_hover_color = Color(1, 1, 1, 1)
+CheckBox/colors/font_pressed_color = Color(1, 1, 1, 1)
+CheckBox/colors/font_focus_color = Color(1, 1, 1, 1)
+CheckBox/colors/font_disabled_color = Color(0.61, 0.68, 0.76, 1)
+CheckBox/font_sizes/font_size = 20
+CheckBox/styles/focus = SubResource("Style_focus")
+PanelContainer/styles/panel = SubResource("Style_panel")
+
+[node name="MatchDevMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 30
+script = ExtResource("1_menu")
+
+[node name="Frame" type="Control" parent="."]
+visible = false
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 0
+theme = SubResource("Theme_development")
+
+[node name="Dim" type="ColorRect" parent="Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.016, 0.027, 0.047, 0.82)
+
+[node name="Center" type="CenterContainer" parent="Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DevPanel" type="PanelContainer" parent="Frame/Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Frame/Center/DevPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Header" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Frame/Center/DevPanel/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 26
+text = "DESARROLLO"
+
+[node name="Badge" type="Label" parent="Frame/Center/DevPanel/Rows/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+theme_override_font_sizes/font_size = 16
+text = "EXPERIMENTAL"
+
+[node name="AimGuideToggle" type="CheckBox" parent="Frame/Center/DevPanel/Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+theme_override_font_sizes/font_size = 18
+text = "Guía de apuntado"
+
+[node name="StateSummary" type="Label" parent="Frame/Center/DevPanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 18
+text = "Sin estado confirmado
+Los controles estarán disponibles al recibir un snapshot válido."
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 2
+
+[node name="ModeLabel" type="Label" parent="Frame/Center/DevPanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "Modo para el próximo reinicio"
+
+[node name="ModeRow" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="ModeSelector" type="Button" parent="Frame/Center/DevPanel/Rows/ModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(310, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "Sin estado recibido"
+alignment = 0
+
+[node name="ApplyModeButton" type="Button" parent="Frame/Center/DevPanel/Rows/ModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+disabled = true
+text = "Aplicar modo y reiniciar"
+
+[node name="ResetWarning" type="Label" parent="Frame/Center/DevPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.85, 0.64, 1)
+theme_override_font_sizes/font_size = 16
+text = "Reinicia marcador, reloj e IA. Elegir un modo no reinicia."
+autowrap_mode = 3
+max_lines_visible = 2
+
+[node name="Groups" type="VBoxContainer" parent="Frame/Center/DevPanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="RivalRow" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows/Groups"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="RivalToggle" type="CheckBox" parent="Frame/Center/DevPanel/Rows/Groups/RivalRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "IA rival (incluye portero)"
+
+[node name="RivalStatus" type="Label" parent="Frame/Center/DevPanel/Rows/Groups/RivalRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 18
+text = "Sin estado"
+
+[node name="TeammatesRow" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows/Groups"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="TeammatesToggle" type="CheckBox" parent="Frame/Center/DevPanel/Rows/Groups/TeammatesRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "IA campo local · al no controlarlo"
+
+[node name="TeammatesStatus" type="Label" parent="Frame/Center/DevPanel/Rows/Groups/TeammatesRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 18
+text = "Sin estado"
+
+[node name="KeeperRow" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows/Groups"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="KeeperToggle" type="CheckBox" parent="Frame/Center/DevPanel/Rows/Groups/KeeperRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "IA portero local"
+
+[node name="KeeperStatus" type="Label" parent="Frame/Center/DevPanel/Rows/Groups/KeeperRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 18
+text = "Sin estado"
+
+[node name="BodiesNotice" type="Label" parent="Frame/Center/DevPanel/Rows"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "Intención = IA al no controlarlo. Susp. = control humano; conserva atletas y balón."
+autowrap_mode = 3
+max_lines_visible = 2
+
+[node name="ExerciseRow" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ExerciseSelector" type="OptionButton" parent="Frame/Center/DevPanel/Rows/ExerciseRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(310, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_hover")
+theme_override_styles/pressed = SubResource("Style_hover")
+theme_override_styles/focus = SubResource("Style_focus")
+
+[node name="ApplyExerciseButton" type="Button" parent="Frame/Center/DevPanel/Rows/ExerciseRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+disabled = true
+text = "Iniciar ejercicio (reinicia)"
+
+[node name="ErrorSlot" type="Control" parent="Frame/Center/DevPanel/Rows"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ErrorText" type="Label" parent="Frame/Center/DevPanel/Rows/ErrorSlot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.70, 0.61, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 2
+
+[node name="Footer" type="HBoxContainer" parent="Frame/Center/DevPanel/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="CloseButton" type="Button" parent="Frame/Center/DevPanel/Rows/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 44)
+layout_mode = 2
+text = "Volver"
+
+[node name="NavigationHint" type="Label" parent="Frame/Center/DevPanel/Rows/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.74, 0.80, 0.87, 1)
+theme_override_font_sizes/font_size = 16
+text = "Flechas / Stick · Elegir    Intro / A · Aceptar\nEsc / B / Menú · Volver sin reanudar"
+horizontal_alignment = 2
+
+[node name="ModeDropdown" type="PanelContainer" parent="Frame"]
+unique_name_in_owner = true
+visible = false
+z_index = 5
+layout_mode = 0
+offset_right = 310.0
+offset_bottom = 104.0
+theme_override_styles/panel = SubResource("Style_dropdown")
+
+[node name="Choices" type="VBoxContainer" parent="Frame/ModeDropdown"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="MicroChoice" type="Button" parent="Frame/ModeDropdown/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "1v1 de regresión"
+alignment = 0
+
+[node name="PreviewChoice" type="Button" parent="Frame/ModeDropdown/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "5v5 experimental"
+alignment = 0
+
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/ModeRow/ModeSelector" to="." method="_on_mode_selector_pressed"]
+[connection signal="pressed" from="Frame/ModeDropdown/Choices/MicroChoice" to="." method="_on_micro_chosen"]
+[connection signal="pressed" from="Frame/ModeDropdown/Choices/PreviewChoice" to="." method="_on_preview_chosen"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/ModeRow/ApplyModeButton" to="." method="_on_apply_pressed"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/Groups/RivalRow/RivalToggle" to="." method="_on_rival_pressed"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/Groups/TeammatesRow/TeammatesToggle" to="." method="_on_teammates_pressed"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/Groups/KeeperRow/KeeperToggle" to="." method="_on_keeper_pressed"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/Footer/CloseButton" to="." method="_on_close_pressed"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/Header/AimGuideToggle" to="." method="_on_aim_guide_pressed"]
+[connection signal="item_selected" from="Frame/Center/DevPanel/Rows/ExerciseRow/ExerciseSelector" to="." method="_on_exercise_selected"]
+[connection signal="pressed" from="Frame/Center/DevPanel/Rows/ExerciseRow/ApplyExerciseButton" to="." method="_on_exercise_apply_pressed"]

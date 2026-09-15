@@ -1,0 +1,37 @@
+{
+  "repository": "https://github.com/ahujasid/blender-mcp",
+  "commit": "5f8ddaf6e987c4aa0c3467fcc548838b28f64477",
+  "reviewedOn": "2026-09-09",
+  "license": "MIT",
+  "package": "blender-mcp",
+  "version": "1.9.1",
+  "wheelUrl": "https://files.pythonhosted.org/packages/98/93/3e8656c0436c7df6397775064cc05261910c05be009c598d38dda0eda816/blender_mcp-1.9.1-py3-none-any.whl",
+  "wheelSha256": "ede3aed34926f77142b8f00ee4f8544f68067d2dc747da8295d1c456171355b2",
+  "addonPolicy": {
+    "installedSha256": "dffe5bbe59283094499fd10c83650e23db7f736e8742109cdf03da7eecae507d",
+    "upgradeFromSha256": [
+      "be11621dca5fce7d00d291837a03b3bfe7d6acdbc27d42d3d73c98ab66491483"
+    ],
+    "patchScript": "tools\\blender\\configure_blender.py",
+    "changes": [
+      "Default telemetry_consent to False.",
+      "Default blendermcp_auto_start_server to False.",
+      "Set the scene-based registration auto_start decision to False.",
+      "Set the no-scene registration auto_start fallback to False.",
+      "Replace SO_REUSEADDR on the actual listener with SO_EXCLUSIVEADDRUSE before bind on Windows; fail closed if unavailable and use default non-reuse binding elsewhere."
+    ],
+    "reason": "Keep automatic sockets and telemetry off; the trusted launcher must own an exclusive loopback listener before reporting readiness."
+  },
+  "gitBlobs": {
+    "addon.py": "884340f0716f5fa94022d57ccb9ed0564707bed4",
+    "src/blender_mcp/server.py": "d6821db37adb1a89803cdcbd682c75f7772171b8",
+    "src/blender_mcp/telemetry.py": "e5fda8c31195d13de10ad982f2cdb7f960d71a2c",
+    "src/blender_mcp/telemetry_decorator.py": "23bfda58e4123da22d00f8109ce7084baca1384e",
+    "src/blender_mcp/safe_mode.py": "7bc63a8ba8feb172e820205a3df0579ab00e2c75",
+    "src/blender_mcp/trajectory.py": "7a9421744eff32fa7a4f3bda205b05939faa1845",
+    "src/blender_mcp/addon_manager.py": "73353c4589afce28a3bf9d0ab3ccc1b04f023491",
+    "src/blender_mcp/consent_prompt.py": "e507329ca582555604b54159f5e5ec83fe86555d",
+    "src/blender_mcp/__init__.py": "54a60dcd77bbcdc169a6c11dbb114a46e71806dc",
+    "LICENSE": "82e98f0ee1ef20d31f852ad43c91020cc51f82ea"
+  }
+}

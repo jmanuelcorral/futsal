@@ -1,0 +1,68 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://bootstrap/bootstrap.gd" id="1_bootstrap"]
+
+[node name="DevelopmentBootstrap" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bootstrap")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.035, 0.043, 0.06, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 96
+theme_override_constants/margin_top = 96
+theme_override_constants/margin_right = 96
+theme_override_constants/margin_bottom = 96
+
+[node name="Status" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 32
+
+[node name="Title" type="Label" parent="Margin/Status"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.9, 0.94, 1)
+theme_override_font_sizes/font_size = 48
+text = "FUTSAL / DIAGNÓSTICO TÉCNICO"
+
+[node name="Scope" type="Label" parent="Margin/Status"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.81, 1)
+theme_override_font_sizes/font_size = 28
+text = "Diagnóstico técnico independiente de la microdemo"
+autowrap_mode = 2
+
+[node name="Details" type="Label" parent="Margin/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Inicializando diagnóstico…"
+
+[node name="Spacer" type="Control" parent="Margin/Status"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Boundary" type="Label" parent="Margin/Status"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.73, 0.81, 1)
+theme_override_font_sizes/font_size = 24
+text = "Esta pantalla no ejecuta el partido G1.\nNo acredita calidad artística, sensación humana ni 1080p60.\nAquí los bindings solo se diagnostican; el juego se abre con -RunGame."
+autowrap_mode = 2

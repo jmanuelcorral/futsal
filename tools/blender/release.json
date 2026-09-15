@@ -1,0 +1,12 @@
+{
+  "version": "4.5.13",
+  "series": "4.5 LTS",
+  "platform": "windows-x64",
+  "archive": "blender-4.5.13-windows-x64.zip",
+  "url": "https://download.blender.org/release/Blender4.5/blender-4.5.13-windows-x64.zip",
+  "checksumsUrl": "https://download.blender.org/release/Blender4.5/blender-4.5.13.sha256",
+  "sha256": "b5fdf800ce65fa2f209e8f68d02667e4d720fa1c42f247c72d1882ab04decba6",
+  "reviewedOn": "2026-09-09",
+  "installMethod": "official-portable-per-user",
+  "reason": "WinGet LTS feed offered 4.5.10 and a WiX MSI; official 4.5.13 portable avoids elevation and preserves existing versions."
+}
