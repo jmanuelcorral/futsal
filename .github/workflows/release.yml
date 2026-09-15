@@ -1,0 +1,111 @@
+name: Native release candidates
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version prevista del release, debe coincidir con el proyecto
+        required: true
+        type: string
+        default: v0.4.0-preview
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUTF8: "1"
+  FUTSAL_RELEASE_VERSION: ${{ inputs.version }}
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'jmanuelcorral/futsal' && github.event.repository.private == false
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - platform: windows-x86_64
+            runner: windows-2025
+            python: python
+          - platform: linux-x86_64
+            runner: ubuntu-24.04
+            python: python3
+          - platform: macos-universal
+            runner: macos-15
+            python: python3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          lfs: true
+      - name: Portable unit tests
+        shell: ${{ matrix.python }} {0}
+        run: |
+          import subprocess, sys
+          subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tools/release/tests", "-v"], check=True)
+      - name: Build and validate packaged release
+        shell: ${{ matrix.python }} {0}
+        env:
+          RELEASE_PLATFORM: ${{ matrix.platform }}
+        run: |
+          import os, subprocess, sys
+          args = [sys.executable, "-m", "tools.release", "build",
+                  "--platform", os.environ["RELEASE_PLATFORM"],
+                  "--commit", os.environ["GITHUB_SHA"],
+                  "--tag", os.environ["FUTSAL_RELEASE_VERSION"]]
+          subprocess.run(args, check=True)
+      - name: Upload validated candidate and proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: futsal-${{ matrix.platform }}
+          path: build/release/dist/${{ matrix.platform }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Upload failure proof
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: failed-${{ matrix.platform }}
+          path: build/release/proof/${{ matrix.platform }}
+          if-no-files-found: warn
+          retention-days: 3
+
+  verify:
+    name: Verify exactly three candidates
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: futsal-*
+          path: build/release/downloaded
+          merge-multiple: true
+      - name: Verify archives, checksums and native proofs
+        shell: python3 {0}
+        run: |
+          import os, subprocess, sys
+          args = [sys.executable, "-m", "tools.release", "verify",
+                  "--directory", "build/release/downloaded",
+                  "--commit", os.environ["GITHUB_SHA"],
+                  "--tag", os.environ["FUTSAL_RELEASE_VERSION"],
+                  "--index", "build/release/verified/release-index.json"]
+          subprocess.run(args, check=True)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-release-index
+          path: build/release/verified
+          if-no-files-found: error
+          retention-days: 7
