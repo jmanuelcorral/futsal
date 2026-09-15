@@ -268,6 +268,170 @@ acreditan un commit ni pasan como conjunto publicable.
 
 ## Evidencia y límites de esta entrega
 
+### Primer CI nativo: run 34965436939
+
+El run de `d5b8b956a976796fb75128d93cbdd1141df9f301` arrancó correctamente
+la matriz con los shells literales de d5. **No produjo paquetes publicables**;
+el colector quedó omitido.
+
+| Job | Fallo observado | Estado |
+|---|---|---|
+| Windows `104368667126` | 75/76 unidades; el test de contención comparaba `RUNNER~1` con la ruta larga devuelta por `resolve()` | Corregida la expectativa canónica, conservando los rechazos de raíz y escape |
+| macOS `104368667259` | 75/76 unidades; el mismo test comparaba `/var` con `/private/var` | Misma corrección portable, sin saltos por OS |
+| Linux `104368667268` | Unidades completas; fuente 201/1080 y paquete legacy 218; gameplay empaquetado 193/196, detenido en G31 antes de los 28 casos | Causa en G31, no en el lector Python; corrección y validación local descritas abajo |
+
+En `game\diagnostics\gameplay_smoke.gd`, G31 utilizaba
+`ProjectSettings.globalize_path("res://")`. Godot documenta que esa operación
+no proporciona una raíz física válida en proyectos exportados. Con raíz vacía,
+la condición rechaza cualquier padre absoluto POSIX porque empieza por `/`.
+Una fixture nativa mínima con el motor/template Windows fijado confirmó la raíz
+vacía en export y la raíz válida en editor. `--path` tampoco lo corrige: el
+template oficial está compilado sin soporte para overrides de ruta.
+
+Coordinación corrigió la selección de raíz física: se conserva la del editor;
+cuando está vacía se usa el directorio del ejecutable y, en macOS, se protege
+todo el bundle `.app`. La contención exige rutas absolutas no virtuales,
+normaliza separadores y `..`, y conserva el límite de componente y la
+comparación conservadora sin distinguir mayúsculas. Los cuatro checks G31
+y los contadores **201/218/1080/1097** no cambian. No se sustituye el paquete
+por ejecución desde editor, rutas ficticias o un subset de casos.
+
+La corrección de tests pasa **77/77 unidades locales Windows** desde la copia
+aislada de d5, con los 76 anteriores y una regresión adicional de alias/escape.
+La evidencia descargada y los probes están en
+`build\release\ci-34965436939`; no se importó ni modificó el juego vivo.
+Esta comprobación local no acredita una repetición nativa de macOS/Linux.
+
+### Primera integración G31: histórica y rechazada
+
+**Vasquez rechazó este intento** por identificar el bundle y vetar rutas virtuales
+antes de normalizar separadores, `..` y mayúsculas. Sus 20 casos de rutas no
+cubrían esas variantes. El freeze SHA-256
+`c84e8fae374160ead06ada4fe41ebe416712e685660e0944426cf0830c9b9672`
+y el ZIP Windows `34e235…` se conservan **como históricos rechazados, no como GO**.
+Las cifras siguientes documentan lo ejecutado entonces, no una aceptación.
+
+`build\release\g31-04-validation\source` parte del archivo de d5, cotejado con
+los blobs Git y la normalización CRLF/LF declarada. Incorpora **sólo cinco
+deltas**: los dos archivos de coordinación
+`game\diagnostics\gameplay_smoke.gd` y `game\tests\test_match_integration.gd`,
+la corrección de `tools\release\tests\test_release.py`, el binding de
+`tools\release\smoke-contract.json` y esta documentación.
+No consume los cambios artísticos del juego vivo ni sus nuevos assets,
+`project.godot` o `match.gd`. La copia final está en `frozen-source` y en
+`futsal-0.4.0-preview-g31-source.zip`, junto a la evidencia.
+
+En ese intento se actualizó **únicamente el hash del productor gameplay** a
+`ce8fbc9877dfc4e7dae1b44783156141f6990c0598c63273947f287a2d1596ca`.
+Los demás productores, las listas literales y los formatos permanecen iguales.
+La prueba de integración existente añade los **20 casos puros** de selección
+y contención de coordinación; no hay nuevo runner ni cambio en `Test-MicroSlice`.
+
+| Ejecución Windows histórica, insuficiente para aceptación | Resultado |
+|---|---:|
+| Unidades portables, incluidos los 76 tests de d5 | 77/77 |
+| `test_match_integration.gd`, incluidas las 20 pruebas de rutas | 224/224 |
+| Smokes fuente legacy + gameplay | 201/201 + 1080/1080 |
+| Smokes desde el ZIP extraído legacy + gameplay | 218/218 + 1097/1097 |
+| Guardas iniciales G31 en fuente y ZIP extraído | 4/4 en cada uno |
+
+La integración registra `integration_errors=[]` y `command_refusals=[]`;
+sus eventos nativos son **614 key, 168 joy_button y 222 joy_motion**.
+Los procesos terminaron con salida 0 y ambos EOF, sin errores ni warnings.
+Cada recorrido gameplay completa **28 casos y 20 observaciones, con cero PNG**.
+La auditoría pasiva del nuevo ZIP coteja sus **28 archivos de prueba**.
+Las solicitudes Windows System + Execution quedaron liberadas.
+
+La comprobación de callers conservó **13 invocaciones: cinco de esa ejecución**
+(cuatro smokes Windows y una integración) y **ocho históricas**
+(cuatro del Windows anterior y cuatro del Linux fallido), no 13 ejecuciones nuevas.
+Sus reportes están fuera de las raíces protegidas; el fallo histórico de Linux
+no se convierte en éxito. Se inspeccionaron también los layouts de
+`Invoke-Game`, `Get-GodotGameplayEvidencePaths` y el build macOS: las pruebas
+usan directorios separados del proyecto/binario, nunca internos al bundle. El layout macOS
+y sus casos puros no equivalen a una ejecución nativa en ese sistema.
+No se detectó ningún caller que requiriera relajar G31.
+
+El candidato está en
+`build\release\g31-04-validation\source\build\release\local-g31\dist\windows-x86_64`.
+
+| Archivo | Bytes | SHA-256 |
+|---|---:|---|
+| `futsal-v0.4.0-preview-windows-x86_64.zip` | 39.608.715 | `34e23587c87b39a9519d2e780a61191ce6e34276f6beda0737600fccfada61e7` |
+| `Futsal.exe` dentro del ZIP | 109.656.184 | `4159ae511084449e6766d7d05a512a7dc7dfb1045f54d02b6310708d1d4ce254` |
+
+Es **local y no publicable**: `commit=null`, `publishableCandidate=false`.
+No se hicieron commits, push, dispatch ni promoción de la activa. Se conservan
+el ZIP anterior `9c412…`, los cinco EXE históricos/activa y el manifest anterior.
+`unit-result.json`, `integration-result.json`, `audit-result.json`,
+`caller-validation.json`, `freeze.json` y los logs de `proof` registran esta
+ejecución. La revisión independiente de Vasquez la rechazó; sus resultados no
+se reutilizan para aprobar el candidato corregido siguiente.
+No se declara aceptación artística, humana, de FPS ni firma Windows.
+
+### Segunda integración G31: normalizar antes de decidir
+
+Coordinación corrigió únicamente los mismos dos GDScript. Ahora
+`runtime_output_root` normaliza separadores y `..` **antes** de identificar
+`Contents/MacOS`, comparando esos componentes sin distinguir mayúsculas.
+`output_is_outside_runtime` normaliza y pasa a minúsculas **antes** de exigir
+ruta absoluta y vetar `res:`/`user:`; mantiene la protección de `/` y el límite
+de componente. Ferro incorpora esos archivos sin modificar su semántica.
+
+El test de integración conserva los 20 casos originales y añade **14
+regresiones: 34 casos de rutas, 13 de selección y 21 de contención**.
+Cubren `MacOS/../MacOS`, `./`, `CONTENTS/MACOS`, barras Windows y esquemas
+virtuales con barras o mayúsculas tanto en el padre como en la raíz.
+No hay nuevo runner ni cambios en `Test-MicroSlice`.
+
+La fuente nueva está en `build\release\g31-r2-04-validation\source`, de nuevo
+**d5 más cinco deltas exactos**, sin consumir otros archivos del juego vivo
+ni arte. El único cambio del oráculo es el hash normalizado del productor
+gameplay:
+`2e9803f14c7d3dff5fede94ce32586c03f37f6b66c8b305032005f1e51592d9c`.
+Se conservan las listas, formatos y contadores **201/218/1080/1097**.
+
+| Nueva ejecución Windows aislada | Resultado |
+|---|---:|
+| Unidades portables | 77/77 |
+| Integración existente, con los 34 casos de rutas | 238/238 |
+| Smokes fuente legacy + gameplay | 201/201 + 1080/1080 |
+| Smokes del ZIP extraído legacy + gameplay | 218/218 + 1097/1097 |
+| Guardas iniciales G31 en fuente y paquete | 4/4 en cada uno |
+
+La integración registra `integration_errors=[]`, `command_refusals=[]` y
+**614 key, 168 joy_button, 222 joy_motion**. Todos estos recorridos terminaron
+con salida 0, ambos EOF y sin diagnósticos. Gameplay conserva **28 casos,
+20 observaciones y cero PNG headless**. El auditor comprueba los **28 archivos
+de evidencia** del paquete. Las solicitudes Windows quedaron liberadas.
+
+La revisión de callers separa expresamente **cinco recorridos actuales**
+(los cuatro smokes y la integración) de **ocho históricos** (Windows `9c412…`
+y el CI Linux fallido), más **tres layouts estáticos**. No son 13 ejecuciones
+nuevas. No se detectan reportes internos al proyecto/binario ni al layout del
+bundle. Los casos puros y ese layout no acreditan runtime macOS/Linux.
+
+El nuevo ZIP está en
+`build\release\g31-r2-04-validation\source\build\release\windows-r2\dist\windows-x86_64`.
+
+| Archivo | Bytes | SHA-256 |
+|---|---:|---|
+| `futsal-v0.4.0-preview-windows-x86_64.zip` | 39.608.620 | `4af54241b5db84c87724ccceda3799bd94ba35e098b394adccd66a3710ab96c5` |
+| `Futsal.exe` dentro del ZIP | 109.656.152 | `a28ea02d1161e99f574945c2cefa470bf2269be91b51846fa2ef5d055485ce22` |
+
+La copia final queda en `frozen-source` y
+`futsal-0.4.0-preview-g31-r2-source.zip`, dentro de la nueva carpeta de evidencia.
+`freeze.json` y `handoff.json` conservan los hashes raw/LF/blobs, comandos y
+resultados; `caller-validation.json` separa la procedencia de cada caller.
+Se preservan los doce históricos comprobados, incluidos c84/ZIP34e235
+rechazados, ZIP9c412, af23 y los freezes anteriores.
+
+Este segundo candidato sigue **local y no publicable**: `commit=null`,
+`publishableCandidate=false`. No se tocó el índice ni se hicieron commits,
+push, dispatch o promoción del ejecutable. Quedan pendientes la nueva revisión
+de Vasquez y la CI nativa de los tres sistemas sobre el commit que cierre
+coordinación. No se concede aceptación artística, humana, de FPS ni de firma.
+
 ### Corrección pre-CI de procedencia, tipos y diagnósticos
 
 Tras reproducir los tres hallazgos de Vasquez, la fuente corregida quedó aislada
@@ -351,8 +515,8 @@ Fue una copia del árbol publicable, **no un clon remoto del repositorio entonce
 vacío**, y registra `commit=null`. No reemplaza los otros candidatos,
 las copias históricas ni una futura ejecución CI del commit publicado.
 
-Linux/macOS y la ejecución alojada del workflow quedan **pendientes de CI nativo**;
-la unidad sintética del auditor no los sustituye. La revisión independiente
+La repetición completa del workflow en los tres sistemas queda **pendiente de
+CI nativo**; la unidad sintética del auditor no la sustituye. La revisión independiente
 del nuevo tooling/paquetes corresponde a Vasquez. La aprobación previa de las
 fuentes 0.4 no aprueba por sí sola este nuevo pipeline multiplataforma.
 

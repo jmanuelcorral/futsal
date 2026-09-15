@@ -61,11 +61,22 @@ class CommonTests(unittest.TestCase):
 
     def test_owned_output_cannot_be_root_or_sibling(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             self.assertEqual(inside(root, root / "child"), root / "child")
             for path in (root, root.parent / "outside"):
                 with self.assertRaises(ReleaseError):
                     inside(root, path)
+
+    def test_owned_output_resolves_aliases_without_allowing_root_or_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "nested").mkdir()
+            alias = root / "nested" / ".."
+            self.assertEqual(inside(alias, alias / "child"), root / "child")
+            self.assertEqual(inside(root, alias / "child"), root / "child")
+            for candidate in (alias, alias / ".." / "outside"):
+                with self.subTest(candidate=candidate), self.assertRaises(ReleaseError):
+                    inside(root, candidate)
 
     def test_json_write_refuses_overwrite_and_size(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

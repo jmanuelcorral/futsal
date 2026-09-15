@@ -104,10 +104,10 @@ func _prepare_capture_directory() -> bool:
 	if not _check("G31 gameplay report path is absolute", report_path.is_absolute_path()):
 		return false
 	var parent: String = report_path.get_base_dir()
-	var root_path: String = ProjectSettings.globalize_path("res://").replace("\\", "/").trim_suffix("/").to_lower()
-	var normalized_parent: String = parent.replace("\\", "/").to_lower()
+	var root_path: String = runtime_output_root(
+		ProjectSettings.globalize_path("res://"), OS.get_executable_path(), OS.has_feature("macos"))
 	if not _check("G31 gameplay output stays outside runtime source/assets",
-			normalized_parent != root_path and not normalized_parent.begins_with(root_path + "/")):
+			output_is_outside_runtime(parent, root_path)):
 		return false
 	_capture_directory = parent.path_join(report_path.get_file().get_basename() + "-gameplay-captures")
 	if not _check("G31 fresh run owns its capture directory without overwriting earlier evidence",
@@ -118,6 +118,29 @@ func _prepare_capture_directory() -> bool:
 		return false
 	_manifest_path = _capture_directory.path_join("manifest.json")
 	return true
+
+
+static func runtime_output_root(resource_root: String, executable_path: String, macos: bool) -> String:
+	var root_path: String = resource_root.replace("\\", "/").simplify_path()
+	if root_path.is_empty():
+		root_path = executable_path.replace("\\", "/").simplify_path().get_base_dir()
+		var bundle: String = root_path.get_base_dir().get_base_dir()
+		if macos and root_path.get_file().to_lower() == "macos" \
+				and root_path.get_base_dir().get_file().to_lower() == "contents" \
+				and bundle.get_extension().to_lower() == "app":
+			root_path = bundle
+	return root_path
+
+
+static func output_is_outside_runtime(parent: String, runtime_root: String) -> bool:
+	var root_path: String = runtime_root.replace("\\", "/").simplify_path().to_lower()
+	var normalized_parent: String = parent.replace("\\", "/").simplify_path().to_lower()
+	for path: String in [normalized_parent, root_path]:
+		if not path.is_absolute_path() or path.begins_with("res:") or path.begins_with("user:"):
+			return false
+	root_path = root_path.trim_suffix("/")
+	normalized_parent = normalized_parent.trim_suffix("/")
+	return normalized_parent != root_path and not normalized_parent.begins_with(root_path + "/")
 
 
 func _prepare_exercise(mode: Setup.Mode, exercise: Setup.TrainingExercise, label: String) -> bool:

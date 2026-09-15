@@ -12,6 +12,7 @@ const Adapter = preload("res://match/presentation/input/match_input.gd")
 const Camera = preload("res://match/presentation/camera/broadcast_camera.gd")
 const Tuning = preload("res://match/simulation/match_tuning.gd")
 const IntegrationRules = preload("res://match/simulation/match_rule_types.gd")
+const GameplaySmoke = preload("res://diagnostics/gameplay_smoke.gd")
 
 var _host: MatchHost
 var _checks: Array[Dictionary] = []
@@ -50,6 +51,7 @@ func _finalize() -> void:
 
 func _run() -> void:
 	root.size = Vector2i(1920, 1080)
+	_test_gameplay_output_paths()
 	var original_bindings: Dictionary = _bindings()
 	_check("identidad del laboratorio que conserva la regresión G1",
 		ProjectSettings.get_setting("application/config/name") == "Futsal — Laboratorio 5v5"
@@ -100,6 +102,55 @@ func _run() -> void:
 		quit(1)
 		return
 	await _test_exit()
+
+
+func _test_gameplay_output_paths() -> void:
+	var roots: Array[Array] = [
+		["C:/repo/game", "C:/Godot/Godot.exe", false, "C:/repo/game"],
+		["/work/game", "/opt/godot/Godot", false, "/work/game"],
+		["", "C:\\bundle\\Futsal.exe", false, "C:/bundle"],
+		["", "/opt/futsal/Futsal.x86_64", false, "/opt/futsal"],
+		["", "/Applications/Futsal.app/Contents/MacOS/Futsal", true, "/Applications/Futsal.app"],
+		["", "/opt/futsal/Futsal", true, "/opt/futsal"],
+		["/work/game", "/Applications/Godot.app/Contents/MacOS/Godot", true, "/work/game"],
+		["", "/Applications/Futsal.app/Contents/MacOS/../MacOS/Futsal", true, "/Applications/Futsal.app"],
+		["", "/Applications/Futsal.app/Contents/./MacOS/Futsal", true, "/Applications/Futsal.app"],
+		["", "/Applications/Futsal.APP/CONTENTS/MACOS/Futsal", true, "/Applications/Futsal.APP"],
+		["", "\\Applications\\Futsal.app\\Contents\\MacOS\\..\\MacOS\\Futsal", true, "/Applications/Futsal.app"],
+		["", "C:\\bundle\\bin\\..\\Futsal.exe", false, "C:/bundle"],
+		["/work/shared/../game", "/opt/godot/Godot", false, "/work/game"],
+	]
+	for index: int in roots.size():
+		var values: Array = roots[index]
+		_check("G31 raiz fisica de editor o instalacion caso=%d" % index,
+			GameplaySmoke.runtime_output_root(values[0], values[1], values[2]) == values[3])
+	var paths: Array[Array] = [
+		["/tmp/proof", "/opt/futsal", true],
+		["/opt/futsal", "/opt/futsal", false],
+		["/opt/futsal/captures", "/opt/futsal", false],
+		["/opt/futsal-other", "/opt/futsal", true],
+		["/tmp/../opt/futsal/captures", "/opt/futsal", false],
+		["C:\\BUNDLE\\captures", "c:/bundle", false],
+		["C:/bundle-other", "C:/bundle", true],
+		["/Applications/Futsal.app/Contents/Resources", "/Applications/Futsal.app", false],
+		["res://captures", "/work/game", false],
+		["user://captures", "/work/game", false],
+		["/tmp/proof", "", false],
+		["/tmp/proof", "relative", false],
+		["/tmp/proof", "/", false],
+		["res:\\\\captures", "/work/game", false],
+		["user:\\\\captures", "/work/game", false],
+		["RES://captures", "/work/game", false],
+		["UsEr:\\\\captures", "/work/game", false],
+		["/tmp/proof", "res:\\\\game", false],
+		["/tmp/proof", "USER://game", false],
+		["/Applications/Futsal.app/Contents/MacOS/../Resources", "/Applications/Futsal.app", false],
+		["/Applications/futsal.app/contents/Resources", "/Applications/Futsal.APP", false],
+	]
+	for index: int in paths.size():
+		var values: Array = paths[index]
+		_check("G31 contencion de salida portable caso=%d" % index,
+			GameplaySmoke.output_is_outside_runtime(values[0], values[1]) == values[2])
 
 
 func _test_main_contract() -> void:

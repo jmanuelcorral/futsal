@@ -6,7 +6,7 @@
   "hashFormat": "UTF-8 con CRLF normalizado a LF; sin regeneracion durante build.",
   "producers": {
     "diagnostics/match_smoke.gd": "680e22a1c779403fc81c03317e12150b22659affb3de527ac00d7af5c3569583",
-    "diagnostics/gameplay_smoke.gd": "bf94914527e17fb00d26f67ca5b63ed672009180e28ea62c3808ccfdd5615792",
+    "diagnostics/gameplay_smoke.gd": "2e9803f14c7d3dff5fede94ce32586c03f37f6b66c8b305032005f1e51592d9c",
     "match/match.gd": "c589743162e83a65b23fb1e54b59b8a37699407d02dbc1dc1cb208b91b29fcb1"
   },
   "protocols": {
