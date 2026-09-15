@@ -4,6 +4,7 @@ import contextlib
 import io
 import os
 import re
+import shlex
 import sys
 import tempfile
 import textwrap
@@ -162,15 +163,32 @@ class CliTests(unittest.TestCase):
         blocks = re.findall(r"(?m)^        run: \|\n((?:          .*\n|[ \t]*\n)+)", workflow)
         self.assertEqual(len(blocks), 3)
         version = "v9.9.9-input-is-not-hardcoded"
-        environment = {**self.environment(), "FUTSAL_RELEASE_VERSION": version, "RELEASE_PLATFORM": "windows-x86_64"}
-        with mock.patch.object(os, "environ", environment), mock.patch("subprocess.run") as run:
-            for block in blocks:
-                exec(compile(textwrap.dedent(block), str(REPOSITORY / ".github" / "workflows" / "release.yml"), "exec"), {})
-        self.assertEqual(run.call_count, 3)
-        for call, command in zip(run.call_args_list[1:], ("build", "verify"), strict=True):
-            arguments = call.args[0]
-            self.assertEqual(arguments[:4], [sys.executable, "-m", "tools.release", command])
-            self.assertEqual(arguments[arguments.index("--commit") + 1], COMMIT)
-            self.assertEqual(arguments[arguments.index("--tag") + 1], version)
-            self.assertEqual(arguments.count("--tag"), 1)
-            self.assertEqual(call.kwargs, {"check": True})
+        for executable in ("python", "python3"):
+            environment = {
+                **self.environment(), "FUTSAL_RELEASE_VERSION": version,
+                "RELEASE_PLATFORM": "windows-x86_64", "RELEASE_PYTHON": executable,
+            }
+            with mock.patch.object(os, "environ", environment), mock.patch("subprocess.run") as run:
+                commands = [
+                    shlex.split(os.path.expandvars(textwrap.dedent(block).replace("\\\n", " ")))
+                    for block in blocks[:2]
+                ]
+                exec(compile(textwrap.dedent(blocks[2]), str(REPOSITORY / ".github" / "workflows" / "release.yml"), "exec"), {})
+            self.assertEqual(commands[0], [executable, "-m", "unittest", "discover", "-s", "tools/release/tests", "-v"])
+            self.assertEqual(run.call_count, 1)
+            commands.append(run.call_args.args[0])
+            for arguments, command, interpreter in (
+                (commands[1], "build", executable), (commands[2], "verify", sys.executable),
+            ):
+                self.assertEqual(arguments[:4], [interpreter, "-m", "tools.release", command])
+                self.assertEqual(arguments[arguments.index("--commit") + 1], COMMIT)
+                self.assertEqual(arguments[arguments.index("--tag") + 1], version)
+                self.assertEqual(arguments.count("--tag"), 1)
+            self.assertEqual(run.call_args.kwargs, {"check": True})
+
+    def test_workflow_shells_are_literal(self) -> None:
+        workflow = (REPOSITORY / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+        shells = re.findall(r"(?m)^\s+shell: (.+)$", workflow)
+        self.assertEqual(shells, ["bash", "bash", "python3 {0}"])
+        self.assertIn("RELEASE_PYTHON: ${{ matrix.python }}", workflow)
+        self.assertIn('"$RELEASE_PYTHON" -m tools.release build', workflow)

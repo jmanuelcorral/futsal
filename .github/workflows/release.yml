@@ -27,6 +27,9 @@ jobs:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    env:
+      RELEASE_PYTHON: ${{ matrix.python }}
+      RELEASE_PLATFORM: ${{ matrix.platform }}
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -47,21 +50,16 @@ jobs:
           persist-credentials: false
           lfs: true
       - name: Portable unit tests
-        shell: ${{ matrix.python }} {0}
+        shell: bash
         run: |
-          import subprocess, sys
-          subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tools/release/tests", "-v"], check=True)
+          "$RELEASE_PYTHON" -m unittest discover -s tools/release/tests -v
       - name: Build and validate packaged release
-        shell: ${{ matrix.python }} {0}
-        env:
-          RELEASE_PLATFORM: ${{ matrix.platform }}
+        shell: bash
         run: |
-          import os, subprocess, sys
-          args = [sys.executable, "-m", "tools.release", "build",
-                  "--platform", os.environ["RELEASE_PLATFORM"],
-                  "--commit", os.environ["GITHUB_SHA"],
-                  "--tag", os.environ["FUTSAL_RELEASE_VERSION"]]
-          subprocess.run(args, check=True)
+          "$RELEASE_PYTHON" -m tools.release build \
+            --platform "$RELEASE_PLATFORM" \
+            --commit "$GITHUB_SHA" \
+            --tag "$FUTSAL_RELEASE_VERSION"
       - name: Upload validated candidate and proof
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
