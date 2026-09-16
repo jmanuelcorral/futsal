@@ -19,7 +19,7 @@ func _run() -> void:
 	var bootstrap: Bootstrap = Bootstrap.new()
 	var original: Dictionary = {}
 	_check("diagnostic requires input schema 3", Bootstrap.INPUT_SCHEMA_VERSION == 3)
-	_check("diagnostic requires exact gameplay version", Bootstrap.EXPECTED_PROJECT_VERSION == "0.4.0-preview")
+	_check("diagnostic requires exact gameplay version", Bootstrap.EXPECTED_PROJECT_VERSION == "0.5.0-preview")
 	for index: int in ARROWS.size():
 		var action: StringName = Bootstrap.REQUIRED_ACTIONS[index]
 		original[action] = InputMap.action_get_events(action)

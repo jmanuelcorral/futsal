@@ -10,7 +10,7 @@ from tools.release.process import run_process
 
 
 class GitFixture:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, autocrlf: bool = False) -> None:
         self.root = root
         root.mkdir()
         settings = root.parent / (root.name + "-settings")
@@ -24,13 +24,16 @@ class GitFixture:
         })
         self.prefix = [
             "git", "-c", "user.name=Release Fixture", "-c", "user.email=release-fixture@example.invalid",
-            "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false", "-c", "gc.auto=0",
+            "-c", "commit.gpgsign=false", "-c", "core.autocrlf=" + str(autocrlf).lower(), "-c", "gc.auto=0",
             "-c", "maintenance.auto=false", "-c", "core.hooksPath=" + str(settings / "hooks"),
             "-c", "core.attributesFile=" + str(settings / "empty"),
         ]
         self.git("-c", "init.defaultBranch=main", "init", "--quiet", "--template=" + str(settings / "hooks"))
+        self.git("config", "--local", "core.autocrlf", str(autocrlf).lower())
         (root / "game").mkdir()
         repository = HERE.parents[1]
+        shutil.copyfile(repository / ".gitattributes", root / ".gitattributes")
+        shutil.copyfile(repository / "THIRD_PARTY_NOTICES.md", root / "THIRD_PARTY_NOTICES.md")
         shutil.copyfile(repository / "game" / "project.godot", root / "game" / "project.godot")
         (root / "game" / "payload.gd").write_text("extends Node\n", encoding="utf-8", newline="\n")
         shutil.copytree(HERE, root / "tools" / "release",

@@ -271,7 +271,8 @@ try {
     foreach ($field in @('process_id', 'input_schema_version', 'driver_start_calls', 'frames_drawn', 'viewport_width')) {
         Reject-Report "native integer cannot be a string: $field" { param($r) $r[$field] = [string]$r[$field] }
     }
-    foreach ($pair in @(@('project_version', '0.3.0-preview'), @('main_scene', 'res://bootstrap/bootstrap.tscn'),
+    foreach ($pair in @(@('project_version', '0.3.0-preview'), @('project_version', '0.4.0-preview'),
+            @('main_scene', 'res://bootstrap/bootstrap.tscn'),
             @('configured_main_scene', 'res://bootstrap/bootstrap.tscn'), @('input_schema_version', 2),
             @('scope', 'playable-preview-runtime-smoke'), @('gameplay_driver_script', 'res://diagnostics/match_smoke.gd'),
             @('gui_input_method', 'Input.parse_input_event; physical keys and raw joypad events, device 0'),
@@ -282,6 +283,13 @@ try {
             @('authority_path', '/root/Fake/Simulation'), @('camera_path', '/root/Other/BroadcastCamera'))) {
         Reject-Report "false runtime identity is rejected: $($pair[0])=$($pair[1])" { param($r) $r[$pair[0]] = $pair[1] }
     }
+    foreach ($bad in @(@{name = 'historical 0.4'; value = '0.4.0-preview'},
+            @{name = 'boolean'; value = $true}, @{name = 'array'; value = @('0.5.0-preview')})) {
+        Reject-Report "capture manifest requires the current scalar version: $($bad.name)" {
+            param($r, $m) $m['project_version'] = $bad.value
+        }
+    }
+    Reject-Report 'capture manifest cannot omit its version' { param($r, $m) [void]$m.Remove('project_version') }
     Reject-Report 'native GUI dispatch method cannot be silently omitted' { param($r) [void]$r.Remove('gui_input_method') }
     Reject-Report 'native key/joy dispatch method cannot be silently omitted' { param($r) [void]$r.Remove('input_method') }
     Reject-Report 'native key/joy dispatch method cannot be a coerced boolean' { param($r) $r['input_method'] = $true }

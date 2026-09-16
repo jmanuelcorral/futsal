@@ -8,6 +8,7 @@ const Arena = preload("res://match/presentation/arena/match_arena.gd")
 const AthleteView = preload("res://match/presentation/athletes/athlete_view.gd")
 const Snapshot = preload("res://match/simulation/match_snapshot.gd")
 const Tuning = preload("res://match/simulation/match_tuning.gd")
+const AthleteMaterials = preload("res://tests/athlete_test_materials.gd")
 
 
 class NativeErrors extends Logger:
@@ -69,6 +70,11 @@ func _process(_delta: float) -> bool:
 
 
 func _run() -> void:
+	_check("TAA configurado y solicitado por el viewport",
+		ProjectSettings.get_setting("rendering/anti_aliasing/quality/use_taa") == true and root.use_taa)
+	_check("Sombras direccionales suaves con filtrado alto",
+		ProjectSettings.get_setting("rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality")
+			== RenderingServer.SHADOW_QUALITY_SOFT_HIGH)
 	# ---- Arena: ambiente, luces y parqué ----
 	var arena: Arena = Arena.new()
 	root.add_child(arena)
@@ -289,12 +295,13 @@ func _test_bounded_leg_segments(view: AthleteView) -> void:
 	var shin: Node3D = leg[1] as Node3D
 	var shoe: Node3D = leg[3] as Node3D
 	var ankle: Vector3 = shoe.position - AthleteView.SHOE_OFFSET
+	var lengths: Vector2 = view._skin_view.rig.leg_lengths[0]
 	_check("Contacto inalcanzable limita tobillo, no estira pierna",
-		hip.distance_to(ankle) <= AthleteView.MAX_LEG_REACH + 0.00001
+		hip.distance_to(ankle) <= lengths.x + lengths.y - AthleteView.LIMB_EXTENSION_MARGIN + 0.00001
 		and ankle.distance_to(target) > 1.0)
 	_check("Muslo y espinilla mantienen longitudes articuladas",
-		is_equal_approx(thigh.basis.y.length(), AthleteView.LEG_SEGMENT_LENGTH)
-		and is_equal_approx(shin.basis.y.length(), AthleteView.LEG_SEGMENT_LENGTH))
+		is_equal_approx(thigh.basis.y.length(), lengths.x)
+		and is_equal_approx(shin.basis.y.length(), lengths.y))
 	view._pose_leg(0, hip, hip)
 	_check("Objetivo coincidente con cadera produce transformaciones finitas",
 		thigh.transform.is_finite() and shin.transform.is_finite() and shoe.transform.is_finite())
@@ -384,8 +391,7 @@ func _athlete_identity(view: AthleteView) -> String:
 		var mesh: MeshInstance3D = node as MeshInstance3D
 		meshes.append({
 			"node": mesh.get_instance_id(), "mesh": mesh.mesh.get_instance_id(),
-			"material": mesh.material_override.get_instance_id(), "transform": mesh.transform,
-			"colour": (mesh.material_override as StandardMaterial3D).albedo_color,
+			"materials": AthleteMaterials.surface_identity(mesh), "transform": mesh.transform,
 		})
 	var team_shape: MeshInstance3D = view.get_node("TeamShape") as MeshInstance3D
 	var selection: Label3D = view.get_node_or_null("HumanSelection") as Label3D

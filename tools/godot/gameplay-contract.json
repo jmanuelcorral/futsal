@@ -1,5 +1,5 @@
 {
-  "projectVersion": "0.4.0-preview",
+  "projectVersion": "0.5.0-preview",
   "inputSchemaVersion": 3,
   "repositoryPlan": "docs\\DEVELOPMENT_PLAN.md",
   "bindingOverridesStatus": "read canonical DEVELOPMENT_PLAN section 4.3.1-4.3.10 including accepted overrides",
@@ -128,5 +128,5 @@
   },
   "captureIdContract": "Legacy normalized capture-helper identifiers only; actual runtime acceptance uses runtimeCaseNames and GameplayRuntimeValidation.ps1.",
   "publicationOwner": "coordinator after verified artifact run",
-  "publicationPath": "build\\evidence\\0.4.0-preview\\gameplay"
+  "publicationPath": "build\\evidence\\0.5.0-preview\\gameplay"
 }

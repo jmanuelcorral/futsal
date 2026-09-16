@@ -25,13 +25,13 @@ func _run() -> void:
 		driver.run(null, null)
 		return
 	var empty_state: Snapshot = Snapshot.new()
-	if Smoke.PROJECT_VERSION != "0.4.0-preview" \
+	if Smoke.PROJECT_VERSION != "0.5.0-preview" \
 			or driver._mode(empty_state) != Smoke.MICRO_1V1 or driver._ai_ids(empty_state) == [-1] \
 			or typeof(empty_state.get("selected_actor_id")) != TYPE_INT \
 			or typeof(empty_state.get("ai_intent_actor_ids")) != TYPE_ARRAY:
 		print("FUTSAL_SMOKE_HELPER_DEPENDENCY " + JSON.stringify({
 			"ok": false, "pending": ["MatchSnapshot.mode", "MatchSnapshot.ai_actor_ids",
-				"MatchSnapshot.selected_actor_id", "MatchSnapshot.ai_intent_actor_ids", "Hicks 0.4.0-preview driver"],
+				"MatchSnapshot.selected_actor_id", "MatchSnapshot.ai_intent_actor_ids", "Hicks 0.5.0-preview driver"],
 			"scope": "player-control helper contracts unavailable; no unit or runtime acceptance",
 		}))
 		driver.free()

@@ -1,7 +1,7 @@
 extends Control
 
 const INPUT_SCHEMA_VERSION: int = 3
-const EXPECTED_PROJECT_VERSION: String = "0.4.0-preview"
+const EXPECTED_PROJECT_VERSION: String = "0.5.0-preview"
 const DIAGNOSTIC_SCENE: String = "res://bootstrap/bootstrap.tscn"
 const REQUIRED_ACTIONS: Array[StringName] = [
 	&"move_left", &"move_right", &"move_forward", &"move_back",

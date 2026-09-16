@@ -145,7 +145,7 @@ function PlayerControlFixture {
     }
     return @{
         complete = $true; failures = @(); cases_completed = @(1..12 | ForEach-Object { 'F{0:d2}' -f $_ })
-        source_script = 'res://match/match.gd'; main_scene = 'res://match/match.tscn'; project_version = '0.4.0-preview'
+        source_script = 'res://match/match.gd'; main_scene = 'res://match/match.tscn'; project_version = '0.5.0-preview'
         input_schema_version = 3; native_events = @{key = 101; joy_button = 31; joy_motion = 31}; mouse_events = 2
         command_refusals = $refusals; expected_command_refusals = $labels
         unexpected_command_refusals = @(); integration_errors = @(); unexpected_integration_errors = @()
@@ -293,16 +293,17 @@ function FocusSmokeFixture {
 try {
     $configuration = @(
         'config/name="Futsal — Laboratorio 5v5"'
-        'config/version="0.4.0-preview"'
+        'config/version="0.5.0-preview"'
         'run/main_scene="res://match/match.tscn"'
         'preparation/input_schema_version=3'
     ) -join "`r`n"
     Assert-GodotProjectConfiguration $configuration
     Check 'exact schema-3 gameplay project configuration passes' $true
     foreach ($change in @(
-            @('0.4.0-preview', '0.3.0-preview'), @('input_schema_version=3', 'input_schema_version=2'),
+            @('0.5.0-preview', '0.4.0-preview'), @('0.5.0-preview', '0.3.0-preview'),
+            @('input_schema_version=3', 'input_schema_version=2'),
             @('Laboratorio 5v5', 'Microdemo G1'), @('match/match.tscn', 'bootstrap/bootstrap.tscn'))) {
-        Rejected "old or incorrect production configuration fails: $($change[0])" {
+        Rejected "old or incorrect production configuration fails: $($change[0]) -> $($change[1])" {
             Assert-GodotProjectConfiguration ($configuration.Replace($change[0], $change[1]))
         }
     }
@@ -345,9 +346,25 @@ try {
     $control = PlayerControlFixture
     Assert-GodotPlayerControlReport $control
     Check 'current F11 includes the native HOME restart-taker focus event without granting possession' $true
+    foreach ($version in @('0.4.0-preview', '0.5.0-preview')) {
+        $versionedControl = CopyFixture $control
+        $versionedControl.project_version = $version
+        Assert-GodotPlayerControlReport $versionedControl -ProjectVersion $version
+        Check "$version retains its explicit player-control contract" $true
+        $mutant = CopyFixture $versionedControl
+        [void]$mutant.Remove('camera_handoff_motion')
+        Rejected "$version cannot omit the native F12 motion window" {
+            Assert-GodotPlayerControlReport $mutant -ProjectVersion $version
+        }
+        $mutant = CopyFixture $versionedControl
+        $mutant.focus_changes = @($mutant.focus_changes | Where-Object { $_.reason -cne 'restart_taker' })
+        Rejected "$version cannot omit the restart-taker focus event" {
+            Assert-GodotPlayerControlReport $mutant -ProjectVersion $version
+        }
+    }
     $mutant = CopyFixture $control
     $mutant.focus_changes = @($mutant.focus_changes | Where-Object { $_.reason -cne 'restart_taker' })
-    Rejected 'F11 completion alone cannot replace the actual 0.4 restart-taker event' {
+    Rejected 'F11 completion alone cannot replace the actual restart-taker event' {
         Assert-GodotPlayerControlReport $mutant
     }
     foreach ($change in @(
@@ -488,7 +505,7 @@ try {
         $index = [array]::IndexOf(@($mutant.expected_command_refusals | ForEach-Object { $_.case }), $label)
         $mutant.command_refusals[$index].message = $historicalPolicy[$label].message
         $mutant.expected_command_refusals[$index].message = $historicalPolicy[$label].message
-        Rejected "old refusal text cannot authorize a new 0.4 result: $label" { Assert-GodotPlayerControlReport $mutant }
+        Rejected "old refusal text cannot authorize a new 0.5 result: $label" { Assert-GodotPlayerControlReport $mutant }
     }
     Check 'source-defined player-control report requires behavioral records and exact negatives' $true
     foreach ($change in @(
@@ -775,7 +792,7 @@ try {
         ok = $true; passed = 1; total = 1; checks = @(@{name = 'native check'; passed = $true}); failures = @()
         complete = $true; integration_errors = @()
         process_id = 42; report_path = $reportPath; scope = 'playable-preview-runtime-smoke'
-        project_name = 'Futsal — Laboratorio 5v5'; project_version = '0.4.0-preview'; engine_version = '4.7.2-stable (official)'
+        project_name = 'Futsal — Laboratorio 5v5'; project_version = '0.5.0-preview'; engine_version = '4.7.2-stable (official)'
         input_schema_version = 3
         main_scene = 'res://match/match.tscn'; configured_main_scene = 'res://match/match.tscn'
         editor_binary = $true; headless = $true; executable = $executable
@@ -1257,9 +1274,10 @@ try {
     $settings = Get-Content -LiteralPath (Join-Path $root 'game\project.godot') -Raw
     $metadata = Get-Content -LiteralPath (Join-Path $root 'config\toolchain.json') -Raw | ConvertFrom-Json -AsHashtable
     $bootstrap = Get-Content -LiteralPath (Join-Path $root 'game\bootstrap\bootstrap.gd') -Raw
-    Check 'toolchain and diagnostic guards require exact schema-3 version' (
+    Check 'source 0.5 diagnostic guards preserve the historical 0.4 toolchain record and schema 3' (
         $metadata['godot']['projectVersion'] -ceq '0.4.0-preview' -and $metadata['godot']['inputSchemaVersion'] -eq 3 -and
-        $bootstrap.Contains('const EXPECTED_PROJECT_VERSION: String = "0.4.0-preview"') -and
+        (Get-GodotExpectedProjectIdentity).projectVersion -ceq '0.5.0-preview' -and
+        $bootstrap.Contains('const EXPECTED_PROJECT_VERSION: String = "0.5.0-preview"') -and
         $bootstrap.Contains('const INPUT_SCHEMA_VERSION: int = 3'))
     Check 'preview project name is explicit, legacy filename is unchanged' (
         $settings -match '(?m)^config/name="Futsal — Laboratorio 5v5"\r?$' -and

@@ -953,7 +953,9 @@ function Read-GodotGameplayRuntimeReport {
         $manifest = [IO.File]::ReadAllText($manifestPath, [Text.UTF8Encoding]::new($false, $true)) | ConvertFrom-Json -AsHashtable -Depth 64
         foreach ($field in @('schema_version', 'process_id', 'required_png_count', 'saved_png_count')) { Assert-GpInteger $manifest[$field] "manifest.$field" 0 }
         if ($manifest['schema_version'] -ne 1 -or $manifest['process_id'] -ne $report['process_id'] -or
-            $manifest['project_version'] -cne '0.4.0-preview' -or $manifest['driver_script'] -cne 'res://diagnostics/gameplay_smoke.gd' -or
+            $manifest['project_version'] -isnot [string] -or
+            $manifest['project_version'] -cne (Get-GodotGameplayContract)['projectVersion'] -or
+            $manifest['driver_script'] -cne 'res://diagnostics/gameplay_smoke.gd' -or
             $manifest['main_scene'] -cne 'res://match/match.tscn' -or $manifest['required_png_count'] -ne 20 -or $manifest['saved_png_count'] -ne $saved) {
             throw 'Manifest identity does not belong to the actual source/artifact invocation.'
         }

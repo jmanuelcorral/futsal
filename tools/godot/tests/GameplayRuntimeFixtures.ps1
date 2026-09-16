@@ -465,7 +465,7 @@ function New-GpFixtureReport([string]$ReportPath, [bool]$Headless, [bool]$Editor
         ok = $true; complete = $true; passed = $checks.Count; total = $checks.Count; checks = $checks; failures = @()
         process_id = 0; executable = ''; report_path = $ReportPath; timestamp_utc = [datetime]::UtcNow.ToString('s')
         scope = 'playable-gameplay-runtime-smoke'; project_name = 'Futsal — Laboratorio 5v5'
-        project_version = '0.4.0-preview'; engine_version = '4.7.2-stable (official)'; input_schema_version = 3
+        project_version = '0.5.0-preview'; engine_version = '4.7.2-stable (official)'; input_schema_version = 3
         main_scene = 'res://match/match.tscn'; configured_main_scene = 'res://match/match.tscn'
         editor_binary = $EditorBinary; headless = $Headless; display_server = $(if ($Headless) { 'headless' } else { 'Windows' })
         viewport_width = 1920; viewport_height = 1080; physics_engine = 'Jolt Physics'; physics_ticks_per_second = 60

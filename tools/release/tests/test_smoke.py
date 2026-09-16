@@ -64,12 +64,12 @@ def poses(mode: int, tick: int) -> list[dict]:
 class SmokeFixture:
     """Datos sinteticos de unidad; nunca evidencia de un proceso Godot."""
 
-    def __init__(self, root: Path, protocol: str, editor: bool) -> None:
+    def __init__(self, root: Path, protocol: str, editor: bool, identity: dict | None = None) -> None:
         self.root = root
         self.report_path = root / "report.json"
         self.executable = root / "fixture-executable"
         self.contract = read_json(HERE / "smoke-contract.json")
-        self.identity = project_identity(REPOSITORY / "game")
+        self.identity = project_identity(REPOSITORY / "game") if identity is None else identity
         self.engine = load_manifest(HERE / "manifest.json")["engine"]
         self.protocol = protocol
         self.editor = editor

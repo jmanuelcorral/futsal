@@ -1,12 +1,16 @@
 # Distribución de candidatos nativos
 
-Alcance autorizado el **15 de septiembre de 2026**: preparar releases
-**Windows x86_64, Linux x86_64 y macOS Universal2** de `0.4.0-preview`.
+Alcance gráfico autorizado el **16 de septiembre de 2026**: preparar una nueva
+prerelease **Windows x86_64, Linux x86_64 y macOS Universal2** de
+`0.5.0-preview`, con las fuentes gráficas R3 y **input schema 3**.
+La `0.4.0-preview`, su tag/commit y sus paquetes se conservan como históricos.
 Esto no amplía el gameplay de §4.3, no completa el MVP y no aprueba arte,
 sensación humana, mando físico o FPS. El pipeline construye candidatos:
 coordinación gestiona el repositorio, commit y tag; **publica el release sólo
 después de la verificación conjunta y QA**.
 Ningún script ni workflow de este encargo crea releases o ejecuta push.
+Esta preparación no es publicación ni validación nativa de 0.5: coordinación
+cierra el snapshot tras la higiene de fuentes y solicita revisión independiente.
 
 ## Herramientas y fuentes fijadas
 
@@ -74,23 +78,45 @@ La CLI selecciona este modo desde el manifest: no necesita un flag adicional.
 
 La entrada es `game\project.godot`: de ahí se obtienen nombre, versión, escena
 principal e input schema. El tag, si se proporciona, debe ser exactamente
-`v` + versión: **`v0.4.0-preview`**. No se cambia la versión para hacer coincidir
+`v` + versión: **`v0.5.0-preview`**. No se cambia la versión para hacer coincidir
 un tag. `--tag` identifica la versión prevista: **no exige que ese tag Git exista
 ni lo crea**. Fuera del modo local explícito, el commit debe ser el `HEAD` consumido y
 las fuentes, tooling y licencia utilizados no pueden tener cambios pendientes.
 
+Los runners PowerShell distinguen la identidad fuente actual de la evidencia
+histórica: `Get-GodotExpectedProjectIdentity` exige `0.5.0-preview`/schema 3.
+`config\toolchain.json` conserva el cierre real 0.4 y su EXE `af23…`;
+no se relabelan sus flags ni sus pruebas como aceptación 0.5. Los lectores
+mantienen los contratos explícitos de 0.3/0.4 donde corresponde.
+
 La raíz Git efectiva debe ser la raíz fuente resuelta, respetando la comparación
 de rutas de cada OS: una copia dentro de una carpeta ignorada no hereda el commit
 del repositorio padre. No basta `git status`: se cotejan los bytes consumidos con
-los blobs de `HEAD`, incluidos el tooling ejecutado y la licencia. Se rechazan
+los blobs de `HEAD`, incluidos el tooling ejecutado, la licencia y
+`THIRD_PARTY_NOTICES.md`. Se rechazan
 archivos ignorados adicionales y cambios ocultos con `assume-unchanged` o
 `skip-worktree`. Se normaliza CRLF/LF únicamente en los formatos de texto
 declarados; los assets LFS expandidos deben corresponder al SHA-256 y tamaño
 del pointer comprometido.
 
+Los sidecars Godot **`.import` y los `.json` del juego** son texto UTF-8:
+el snapshot y el cotejo contra blobs usan la misma normalización CRLF → LF.
+`.gitattributes` fija `text eol=lf` para esos formatos incluso con
+`core.autocrlf=true`, y su propia política es una entrada textual consumida
+y cotejada con el commit. Esto no reserializa JSON, ordena claves ni ignora
+cambios de contenido. **PNG queda fijado como `-text`; GLB y blend mantienen LFS y
+`-text`**, con comparación binaria exacta y validación de tamaño/hash del pointer.
+No se renormalizan los assets protegidos del árbol vivo ni el índice principal.
+
+Corregir la interpretación de metadata puede cambiar `sourceSnapshotSha256`
+aunque los archivos físicos sean idénticos. El freeze nuevo registra ambas
+huellas sobre los mismos bytes; los snapshots y logs del EXE anterior no se
+reescriben ni se relabelan como pruebas de la nueva política. La selección
+documental de 261 archivos se conserva, añadiendo sólo los deltas EOL revisados.
+
 Cada build:
 
-1. Fija un snapshot de fuente y las huellas de los EXE históricos presentes.
+1. Fija snapshots de juego y avisos, y las huellas de los EXE históricos presentes.
    Rechaza punteros LFS sin resolver. Copia el proyecto a un directorio privado,
    excluyendo `.godot`; no importa sobre el árbol de trabajo original.
 2. Extrae el editor y template verificados, configura **sólo la copia privada**
@@ -133,6 +159,9 @@ recortar checks. El oráculo `tools\release\smoke-contract.json` conserva sus
 nombres, orden, campos principales, formas de casos y hashes normalizados de
 los drivers/main. El build no lo regenera. Cambiar un productor requiere
 actualizar el contrato con evidencia y revisión; no bajar el contador para pasar.
+El binding 0.5 apunta al driver legacy actualizado y al host R3 real
+`game\match\match.gd`; conserva el driver gameplay y las cuatro listas de checks
+de 0.4 sin modificarlas. Este cotejo estático no acredita nuevas ejecuciones.
 
 Ambos recorridos conservan micro **1v1 + porteros** y preview **5v5**. Gameplay
 exige **28 casos y 20 observaciones**, catálogo completo, input teclado/mando/
@@ -158,9 +187,9 @@ este pipeline: no hereda pruebas gráficas de los EXE debug anteriores.
 
 Los nombres son:
 
-- `futsal-v0.4.0-preview-windows-x86_64.zip`
-- `futsal-v0.4.0-preview-linux-x86_64.zip`
-- `futsal-v0.4.0-preview-macos-universal.zip`
+- `futsal-v0.5.0-preview-windows-x86_64.zip`
+- `futsal-v0.5.0-preview-linux-x86_64.zip`
+- `futsal-v0.5.0-preview-macos-universal.zip`
 
 Cada candidato lleva un `.sha256`, un `.build.json` y `proof\<plataforma>`.
 La metadata conserva commit o su ausencia explícita, motor, template, plataforma,
@@ -181,6 +210,9 @@ El productor y los dos lectores consumen esa misma variante; CLI e índice
 proyectan sólo después de validarla. `sha256` continúa siendo el hash del ZIP,
 nunca el de la plantilla.
 El `BUILD_INFO.json` del paquete R3 local separado no se modifica.
+Desde 0.5, `BUILD.json` y `.build.json` también deben concordar en
+`thirdPartyNotices` y `sourceDocumentsSha256`; el auditor valida ambos antes
+de proyectarlos en CLI e índice. Su contrato de contenido se detalla abajo.
 Los logs, JSON y manifiestos nativos permanecen junto a sus hashes, no sólo un
 `passed=true`. Las rutas dentro de los reportes son las de la invocación original:
 auditarlas después **no reconstruye un proceso vivo ni demuestra una nueva ejecución**.
@@ -210,6 +242,26 @@ confiable**; no se ofrecen comandos para desactivar Gatekeeper globalmente.
 El paquete incluye **`GODOT_LICENSE.txt` y `GODOT_COPYRIGHT.txt`** oficiales,
 con todos sus avisos; no se sustituye el texto por una etiqueta “MIT”.
 Esto cubre los avisos del motor y sus terceros, **no asigna licencia al juego**.
+Desde `0.5.0-preview` es obligatorio incluir también
+**`THIRD_PARTY_NOTICES.md` completo**, copiado byte por byte desde la raíz
+fuente. Incluye la procedencia de Human Base Meshes de Dan Ulrich/CC0.
+No se sustituye por un resumen ni por los avisos del motor. Se exige un archivo
+regular, UTF-8, no vacío y de como máximo 1 MiB. No se añaden capturas privadas,
+referencias FIFA, inventarios, historiales o fuentes `.blend` al payload.
+
+El descriptor `thirdPartyNotices` fija `source` y `packaged` al nombre raíz,
+`bytes` entero estricto, `sha256` de los bytes empaquetados y
+`normalizedSha256` del texto UTF-8 con CRLF normalizado a LF.
+`proof\<plataforma>\source-documents.json` contiene exactamente
+`{"THIRD_PARTY_NOTICES.md": "<hash normalizado>"}`; su digest canónico es
+`sourceDocumentsSha256`. El snapshot de juego sigue separado, sin cambiar
+su formato. Los hashes brutos pueden diferir por EOL entre checkouts nativos:
+la copia sigue siendo íntegra y el contenido normalizado debe corresponder
+al blob del commit consumido, o a la fuente local para un candidato sin commit.
+Tres snapshots de avisos iguales entre sí pero ajenos a la fuente se rechazan.
+Los paquetes históricos anteriores a 0.5 conservan ausencia/null de estos
+campos; no pueden inventar nueva procedencia no-null.
+
 Si coordinación añade una licencia raíz (`LICENSE`, `LICENSE.txt` o
 `LICENSE.md`), se copia como `GAME_LICENSE.txt` y se registra su hash.
 Si no existe, `licensePolicy=not-defined` lo declara explícitamente; no se
@@ -224,13 +276,13 @@ Desde la raíz del repo, en Windows:
 python -m unittest discover -s .\tools\release\tests -v
 
 # Candidato local: permite checkout todavía no cerrado, sin inventar commit.
-python -m tools.release build --platform windows-x86_64 --tag v0.4.0-preview `
-  --cache .\tools\godot\.cache --output .\build\release\local-dispatch-final `
+python -m tools.release build --platform windows-x86_64 --tag v0.5.0-preview `
+  --cache .\tools\godot\.cache --output .\build\release\local-graphics05-candidate `
   --allow-uncommitted
 
 # Auditoría pasiva del ZIP y de sus evidencias; no ejecuta Godot.
 python -m tools.release audit --archive `
-  .\build\release\local-dispatch-final\dist\windows-x86_64\futsal-v0.4.0-preview-windows-x86_64.zip
+  .\build\release\local-graphics05-candidate\dist\windows-x86_64\futsal-v0.5.0-preview-windows-x86_64.zip
 ```
 
 En un host Linux o macOS, el mismo módulo acepta respectivamente
@@ -258,7 +310,7 @@ se puede ejecutar:
 
 ```powershell
 python -m unittest discover -s .\tools\release\tests -v
-python -m tools.release build --platform windows-x86_64 --tag v0.4.0-preview
+python -m tools.release build --platform windows-x86_64 --tag v0.5.0-preview
 ```
 
 Se acredita el `HEAD` real y se crea `build\release\cache` si hace falta.
@@ -272,7 +324,7 @@ instalación, build ni CI**.
 ## GitHub Actions e integración
 
 `.github\workflows\release.yml` se activa **sólo por `workflow_dispatch`**, con
-input obligatorio `version` (default `v0.4.0-preview`), en el repositorio público
+input obligatorio `version` (default `v0.5.0-preview`), en el repositorio público
 `jmanuelcorral/futsal`. No tiene trigger `push`, tampoco para tags: la publicación
 posterior de la etiqueta no vuelve a construir los paquetes.
 No se han activado ni modificado los workflows históricos de Squad.
@@ -288,7 +340,7 @@ esas modificaciones al baseline público.
 Comando de coordinación, una vez publicado el workflow revisado:
 
 ```powershell
-gh workflow run release.yml --repo jmanuelcorral/futsal --ref main -f version=v0.4.0-preview
+gh workflow run release.yml --repo jmanuelcorral/futsal --ref main -f version=v0.5.0-preview
 ```
 
 La matriz usa runners **estándar públicos** `windows-2025`, `ubuntu-24.04` y
@@ -301,7 +353,9 @@ las pruebas de fallo, tres.
 
 Checkout/upload/download de GitHub están fijados a commits completos en el
 manifest y workflow. Todos los jobs tienen `contents: read`;
-checkout usa `persist-credentials: false`. No hay credenciales Apple,
+checkout usa `persist-credentials: false` y **`lfs: true` tanto en build como
+en verify**, para cotejar los assets reales con sus pointers SHA/tamaño.
+No hay credenciales Apple,
 PAT de publicación, secrets propios ni permisos de escritura.
 Coordinación consume los tres artefactos y el índice del **mismo run**, comprueba
 QA y ejecuta su publicación final con `gh` fuera de este workflow, creando el tag
@@ -312,7 +366,7 @@ Para auditar conjuntamente una descarga existente:
 
 ```powershell
 python -m tools.release verify --directory .\build\release\downloaded `
-  --commit <SHA-del-run> --tag v0.4.0-preview `
+  --commit <SHA-del-run> --tag v0.5.0-preview `
   --index .\build\release\verified\release-index.json
 ```
 
@@ -323,6 +377,31 @@ Los candidatos locales con `commit=null` conservan auditoría pasiva, pero nunca
 acreditan un commit ni pasan como conjunto publicable.
 
 ## Evidencia y límites de esta entrega
+
+### Preparación gráfica 0.5, separada de la publicación 0.4
+
+Evidencia de preparación en `build\publication\graphics05-preparation`.
+La suite portable ejecutó **111/111 pruebas** sobre versiones, avisos,
+metadata/auditoría, proceso/EOF, snapshots y guards LFS existentes.
+Las fixtures Git son locales y sintéticas; no son pruebas de ejecución nativa.
+El contrato conserva exactamente **201/218/1080/1097** checks. No se ha
+reexportado, promovido ni publicado ningún ejecutable en esta preparación.
+Los helpers PowerShell pasaron **489/489**, **248/248** y **298/298** checks,
+con sintaxis de diez scripts y actionlint 1.7.12 sin diagnósticos. Son fixtures
+sintéticas, incluidas sus imágenes y procesos PowerShell propios, no Godot.
+Se conserva el intento runtime cortado por el límite externo inicial de 240 s;
+el recorrido completo con trazas terminó en 268,968 s con un presupuesto externo
+de 600 s. No se modificaron los watchdogs, plazos ni oráculos nativos.
+El handoff registra también la corrección de una etiqueta de fixture duplicada
+y el cotejo final, sin convertir estos checks en aceptación de la preview.
+
+Pendientes para coordinación: higiene final de fuentes por Lambert, snapshot
+exacto revisado por Vasquez, validación nativa de los tres destinos y publicación
+de una nueva prerelease sólo después de ese cierre. La aprobación técnica local
+del EXE R3 histórico no se convierte en aprobación artística, humana o de FPS,
+ni acredita otros binarios construidos posteriormente.
+
+Las secciones siguientes conservan las evidencias y rechazos **históricos 0.4**.
 
 ### Corrección R3 de tooling: contrato de procedencia release
 

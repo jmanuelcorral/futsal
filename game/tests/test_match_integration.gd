@@ -55,7 +55,7 @@ func _run() -> void:
 	var original_bindings: Dictionary = _bindings()
 	_check("identidad del laboratorio que conserva la regresión G1",
 		ProjectSettings.get_setting("application/config/name") == "Futsal — Laboratorio 5v5"
-		and ProjectSettings.get_setting("application/config/version") == "0.4.0-preview")
+		and ProjectSettings.get_setting("application/config/version") == "0.5.0-preview")
 	_check("schema 3 conserva entrada contextual y flechas y añade L/X",
 		ProjectSettings.get_setting("futsal/preparation/input_schema_version") == 3
 		and InputMap.has_action("dribble"))

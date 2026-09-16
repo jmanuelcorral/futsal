@@ -67,6 +67,8 @@ def main() -> int:
                 "buildType": metadata["buildType"], "engineWorkaround": metadata.get("engineWorkaround"),
                 "templateEntry": metadata.get("templateEntry"),
                 "templateSha256": metadata.get("templateSha256"),
+                "thirdPartyNotices": metadata.get("thirdPartyNotices"),
+                "sourceDocumentsSha256": metadata.get("sourceDocumentsSha256"),
                 "publishableCandidate": metadata["publishableCandidate"],
                 "published": False, "liveProcessesLaunched": False, "technicalReviewPending": True,
                 "scope": "Auditoria pasiva de bytes y evidencia archivada; no acepta procesos rehidratados.",

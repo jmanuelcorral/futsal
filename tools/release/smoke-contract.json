@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "projectVersion": "0.4.0-preview",
+  "projectVersion": "0.5.0-preview",
   "inputSchemaVersion": 3,
-  "provenance": "Identidades literales del All revisado preview-20260914T173159Z-2299ed7ae9a849a1a0cbcf7a43d4f930",
+  "provenance": "Checks literales conservados del oraculo 0.4 revisado; productores reales R3/0.5 vinculados para preparacion. No acredita nueva ejecucion nativa ni aprobacion 0.5.",
   "hashFormat": "UTF-8 con CRLF normalizado a LF; sin regeneracion durante build.",
   "producers": {
-    "diagnostics/match_smoke.gd": "680e22a1c779403fc81c03317e12150b22659affb3de527ac00d7af5c3569583",
+    "diagnostics/match_smoke.gd": "d958c1ae1991e449135d297ce8578ac541a713f8ad4da16ca8ab42c6ecde46c3",
     "diagnostics/gameplay_smoke.gd": "2e9803f14c7d3dff5fede94ce32586c03f37f6b66c8b305032005f1e51592d9c",
-    "match/match.gd": "c589743162e83a65b23fb1e54b59b8a37699407d02dbc1dc1cb208b91b29fcb1"
+    "match/match.gd": "46c9cfb2776019976057364bd8cb2fb96a94c5e5f92487bfd4a0f7572706bd04"
   },
   "protocols": {
     "legacy": {

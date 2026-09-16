@@ -677,3 +677,127 @@ después del arranque normal exitoso, recibiendo sus mismos objetos de autoridad
 HUD. No sustituye la escena principal ni crea una autoridad falsa. Permite
 comprobar ese recorrido también en el ejecutable exportado; los comandos y
 evidencias vigentes de exportación están en `docs\TOOLING.md`.
+
+### Atleta con skinning — iteración visual del 15 de septiembre
+
+La autorización posterior para usar **Human Base Meshes v1.4.1 de Blender Studio
+(CC0)** permite sustituir la representación por piezas, no modificar la autoridad
+ni aprobar los gates artísticos. Esta iteración está separada de la fuente y los
+paquetes congelados de `0.4.0-preview`.
+
+`AthleteView.configure(id, color, number)` devuelve ahora `Error`: carga un
+`PackedScene` con malla, materiales y `Skeleton3D`; el anfitrión comunica un fallo
+de carga y termina con código 1, sin sustituir silenciosamente el modelo por
+primitivas. Las instancias comparten geometría y texturas, pero conservan sus
+propios huesos y parámetros de equipación.
+
+`athlete_rig.gd` transforma los contactos locales al espacio del esqueleto.
+El GLB orientado a `+Z` se adapta al frente `-Z` del snapshot mediante su raíz;
+no cambia `facing_yaw`. Pies, pelvis, rodillas, codos y palmas siguen los mismos
+gestos y ticks. El punto de agarre es el **centro de la superficie palmar**,
+no la muñeca: se sitúa sobre la tangente del balón, sin añadir el margen de
+2,5 cm que necesitaba la mano primitiva anterior.
+Los nodos ligeros de referencia de contacto ya no dibujan miembros rígidos.
+La marcha normal y el sprint resuelven los brazos mediante IK, evitando que
+el balanceo alargue arbitrariamente las extremidades.
+
+Las caderas, hombros y longitudes se obtienen de la pose de reposo del rig.
+La IK admite segmentos desiguales y objetivos coincidentes o inalcanzables,
+conservando las longitudes; el margen de extensión es de 2 mm. El tobillo y
+el volumen del calzado se calibran con el recurso real (tobillo a unos
+0,108 m), y la orientación del pie neutraliza la apertura de la pose A.
+Estas medidas no cambian cápsulas, alcance físico ni posesión.
+
+La máscara textil `COLOR0` usa pesos RGBA normalizados para principal,
+secundaria, acento y ribetes; piel y accesorios quedan fuera. Cambiar de foco
+no recrea mallas, materiales o dorsales. No se añaden colisiones a presentación.
+Godot almacena los colores de vértice como RGBA8: el shader normaliza de nuevo
+los cuatro pesos después de esa cuantización, sin interpretar la máscara como
+transparencia o aplicar una conversión sRGB a sus datos.
+La piel conserva el albedo y la rugosidad PBR importados, con variaciones
+relativas de tono, no un segundo tintado absoluto. TAA y el filtrado alto de
+sombras direccionales reducen el tramado observado en el ejecutable; no se eliminan las sombras
+ni se considera con ello acreditado el rendimiento o la calidad en movimiento.
+
+Regresiones específicas, también incluidas en `Test-MicroSlice.ps1 -Scope All`:
+
+```powershell
+& $godot --headless --path .\game --script res://tests/test_athlete_rig.gd
+& $godot --headless --path .\game --script res://tests/test_athlete_skinning.gd
+```
+
+La primera cubre el retargeting con un esqueleto sintético; la segunda inspecciona
+el recurso real, UV, pesos, materiales, las diez instancias y la deformación de
+vértices. Los nueve mapas PBR importados deben ser RGBA8 opacos, sin depender de
+una conversión de formato del hardware. La normalización técnica del normal de
+piel conserva exactamente sus canales RGB, la geometría y el rig de R3; no es otra ronda
+artística. Su comprobación incluye el ejecutable con `--verbose`, que antes
+advertía de la conversión RGB8 a RGBA8.
+Comprueba suelas y punteras de la malla deformada, contacto del pie
+a ≤3 cm y piel palmar a ≤1 cm del balón. Incluye mutantes de tobillo antiguo
+y locator palmar separado de la piel: mover sólo un helper no acredita contacto.
+Las pruebas de gestos e integración siguen siendo necesarias. Ninguno
+de esos resultados sustituye la captura del ejecutable, la revisión artística
+independiente, el movimiento observado o la medición de rendimiento.
+
+El diagnóstico opt-in `--athlete-capture --athlete-capture-dir=<ruta absoluta nueva>`
+captura el partido real exportado: micro, detalle frontal/dorsal, cuatro fases de
+sprint, preview 5v5 y córner propio `READY` con cámara asentada. Los planos cercanos
+usan una cámara de inspección, no sustituyen la cámara de producto. La sonda
+espera y registra al menos 24 frames **renderizados** después de cada corte de
+detalle, incluida la vuelta al frontal antes del sprint; no los infiere de ticks físicos.
+La opción adicional `--athlete-shadow-probe` compara parámetros y restaura la luz; su
+manifiesto registra cada configuración. `--fixed-fps 60` sirve para repetir las
+capturas y **no es una medición de FPS**.
+
+El candidato local R3 con GLB `72bb973c…` y EXE `4b189246…` conserva la
+jugabilidad de la preview: 67 pruebas de rig, 277 de skinning/materiales, 190 de
+gestos, 232 de presentación y 238 de integración pasan sobre esta fuente.
+El mismo EXE supera el lector estricto con 1097 controles headless y 1137
+renderizados, veinte PNG de jugabilidad, nueve vistas de atletas y cinco
+rechazos explícitos de rutas de captura inválidas. Evidencia local en
+`.dream-loop\athlete-upgrade\builds\r3-rgba-final-e7ca816f0fd7448d8fc679481cf71cb4`.
+Vasquez repitió la validación del EXE y aprobó técnicamente fuente y artefacto.
+La entrega local, con avisos de Godot y CC0, se encuentra en
+`build\windows\players-r3-preview\FutsalPlayers-preview.exe`; su ZIP
+`build\windows\futsal-players-r3-preview-windows-x86_64.zip` tiene SHA-256
+`9c6a46d6186f0bbab3f88167a4e19c1b437c0919ac0380c722bf136fdd148ac4`.
+El ZIP final corrige únicamente su documentación de arranque: 5v5
+predeterminado y selección 1v1/5v5 desde F1; no reexporta ni cambia el EXE.
+No sustituye los ejecutables históricos ni la release pública 0.4.
+Estos resultados son técnicos: tras las tres rondas siguen pendientes el
+acabado de pelo, manos, ropa y calzado, la aceptación humana y el rendimiento.
+No equivalen a alcanzar la referencia GOALS/FIFA ni a aprobar G2/G3.
+
+### Publicación gráfica 0.5
+
+La autorización del 16 de septiembre permite publicar la iteración R3 existente
+como **0.5.0-preview**, conservando la release 0.4 y sus evidencias. No añade
+otra ronda de modelado ni modifica autoridad, reglas, contactos físicos o el
+input schema 3. El arranque normal sigue siendo 5v5; Desarrollo permite elegir
+micro 1v1 con porteros.
+
+La nueva versión sincroniza los contratos de fuente, diagnóstico y distribución.
+El `.blend` maestro y el GLB se versionan mediante Git LFS: un pointer sin
+descargar no es un asset válido. Los paquetes incorporan los avisos de la base
+CC0 y sus licencias de motor; no incluyen la referencia privada del usuario.
+Los resultados del EXE local `4b189246…` documentados arriba son históricos:
+la candidata 0.5 necesita su propia identidad, comprobación nativa y revisión
+independiente antes de publicarse.
+
+La comprobación nueva del **candidato local Windows 0.5** usa el EXE
+`165a31dfa21b09b6d056a8bb202e188827143477b53ca2ecad13fb4d22d45208`
+y conserva el GLB `72bb973c…`. Sobre una importación limpia: rig **67/67**,
+skinning **277/277**, gestos **190/190**, presentación **232/232** e integración
+**238/238**. El pipeline portable pasó micro **201/201** y jugabilidad
+**1080/1080** en fuente; **218/218** y **1097/1097**, respectivamente, en el
+paquete. El mismo EXE pasó **1137/1137** comprobaciones renderizadas y
+guardó **20 PNG**. Las nueve capturas adicionales de atletas esperan al menos
+24 renders reales tras cada corte de detalle; cinco rutas inválidas se
+rechazaron explícitamente. Las dos imágenes del README proceden de este EXE,
+sin retoques.
+
+Este candidato procede de fuente congelada sin commit y **no es un paquete
+publicable**. La release requiere un commit real y los resultados de CI de
+cada plataforma, con sus propios hashes, además de la revisión independiente.
+Estos controles no acreditan calidad artística, 1080p60 ni aceptación humana.

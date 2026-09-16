@@ -1,0 +1,838 @@
+{
+  "revision": "athlete-upgrade-r3",
+  "status": "R3_publication_preparation",
+  "blender": "4.5.13 LTS",
+  "source": "court_athlete.blend",
+  "source_sha256": "34b519c921b5101974e40cdd70ff6d576e6544ff032f28feb8f6d054ccc9b53f",
+  "visible_triangles": 43345,
+  "visible_vertices": 22441,
+  "bone_count": 54,
+  "deform_bone_count": 51,
+  "material_count": 3,
+  "materials": [
+    "AthleteSkin",
+    "AthleteKit",
+    "AthleteGear"
+  ],
+  "meshes": [
+    {
+      "name": "AthleteSkinMesh",
+      "vertices": 6533,
+      "triangles": 12856,
+      "polygons": 6438,
+      "connected_components": 5,
+      "materials": [
+        "AthleteSkin"
+      ],
+      "max_influences": 4,
+      "unweighted_vertices": 0,
+      "max_normalization_error": 4.470348358154297e-08,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "color_attributes": [],
+      "bounds_blender_m": [
+        [
+          -0.4425260126590729,
+          0.4423643946647644
+        ],
+        [
+          -0.1803087741136551,
+          0.09959673881530762
+        ],
+        [
+          0.39683035016059875,
+          1.7200000286102295
+        ]
+      ]
+    },
+    {
+      "name": "AthleteKitMesh",
+      "vertices": 8425,
+      "triangles": 16235,
+      "polygons": 12149,
+      "connected_components": 4,
+      "materials": [
+        "AthleteKit"
+      ],
+      "max_influences": 4,
+      "unweighted_vertices": 0,
+      "max_normalization_error": 4.470348358154297e-08,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "color_attributes": [
+        {
+          "name": "COLOR0",
+          "type": "FLOAT_COLOR",
+          "domain": "CORNER"
+        }
+      ],
+      "bounds_blender_m": [
+        [
+          -0.2946217954158783,
+          0.29470258951187134
+        ],
+        [
+          -0.1648891568183899,
+          0.1185181513428688
+        ],
+        [
+          0.08964098244905472,
+          1.470377802848816
+        ]
+      ]
+    },
+    {
+      "name": "AthleteGearMesh",
+      "vertices": 7483,
+      "triangles": 14254,
+      "polygons": 8837,
+      "connected_components": 64,
+      "materials": [
+        "AthleteGear"
+      ],
+      "max_influences": 2,
+      "unweighted_vertices": 0,
+      "max_normalization_error": 2.9802322387695312e-08,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "color_attributes": [],
+      "bounds_blender_m": [
+        [
+          -0.2830345928668976,
+          0.28303462266921997
+        ],
+        [
+          -0.14628902077674866,
+          0.1254173070192337
+        ],
+        [
+          -9.771389386514784e-07,
+          1.7459523677825928
+        ]
+      ]
+    }
+  ],
+  "garments": {
+    "jersey": {
+      "connected_components": 1,
+      "uv_panels": {
+        "front": [
+          0.02,
+          0.535,
+          0.48,
+          0.985
+        ],
+        "back": [
+          0.52,
+          0.535,
+          0.98,
+          0.985
+        ],
+        "sleeve_l": [
+          0.02,
+          0.018,
+          0.295,
+          0.142
+        ],
+        "sleeve_r": [
+          0.325,
+          0.018,
+          0.6,
+          0.142
+        ]
+      },
+      "print_blank_blender_bounds": {
+        "x": [
+          -0.085,
+          0.085
+        ],
+        "z": [
+          1.152901947801873,
+          1.3538533279493161
+        ]
+      },
+      "print_note": "Front/back are fixed UV panels; fit labels to the recorded deformed surface, not to world axes."
+    },
+    "shorts": {
+      "connected_components": 1,
+      "uv_panels": {
+        "front": [
+          0.022,
+          0.185,
+          0.48,
+          0.487
+        ],
+        "back": [
+          0.52,
+          0.185,
+          0.978,
+          0.487
+        ]
+      },
+      "construction": "Continuous pelvis/gusset and two leg openings, not separate thigh tubes."
+    },
+    "r3_tailoring": {
+      "Jersey_Continuous": {
+        "outward_component_winding_corrected": false,
+        "anatomical_fit": {
+          "before": {
+            "vertices": 2971,
+            "min_signed_m": -0.005691030062735081,
+            "inside_over_1mm": 39
+          },
+          "after": {
+            "vertices": 2971,
+            "min_signed_m": 0.0034577190890558995,
+            "inside_over_1mm": 0
+          },
+          "openings": 4,
+          "maximum_clearance_shortfall_m": 4.9619177356345634e-05,
+          "fit_policy": "7 mm jersey ease, 3.5 mm inside the narrow axillary fold, up to 29 mm at the loose waist; shorts 7 mm, socks 5.5 mm",
+          "max_vertex_displacement_m": 0.026807039929718234
+        },
+        "connected_turnback": {
+          "openings": [
+            {
+              "boundary_vertices": 110,
+              "perimeter_m": 0.522604410600253,
+              "collar_accent": true
+            },
+            {
+              "boundary_vertices": 70,
+              "perimeter_m": 0.9900922550565563,
+              "collar_accent": false
+            },
+            {
+              "boundary_vertices": 49,
+              "perimeter_m": 0.421266191830257,
+              "collar_accent": false
+            },
+            {
+              "boundary_vertices": 50,
+              "perimeter_m": 0.42102259726740165,
+              "collar_accent": false
+            }
+          ],
+          "thickness_m": 0.0014,
+          "return_depth_m": 0.012,
+          "added_vertices": 558,
+          "connected_components": 1,
+          "independent_trim_objects": 0
+        }
+      },
+      "Shorts_OnePiece_Crotch": {
+        "outward_component_winding_corrected": false,
+        "anatomical_fit": {
+          "before": {
+            "vertices": 1264,
+            "min_signed_m": -0.00456977958947391,
+            "inside_over_1mm": 26
+          },
+          "after": {
+            "vertices": 1264,
+            "min_signed_m": 0.006969063862925395,
+            "inside_over_1mm": 0
+          },
+          "openings": 3,
+          "maximum_clearance_shortfall_m": 3.0936137074604776e-05,
+          "fit_policy": "7 mm jersey ease, 3.5 mm inside the narrow axillary fold, up to 29 mm at the loose waist; shorts 7 mm, socks 5.5 mm",
+          "max_vertex_displacement_m": 0.011569778225960432
+        },
+        "connected_turnback": {
+          "openings": [
+            {
+              "boundary_vertices": 62,
+              "perimeter_m": 0.901973598460149,
+              "collar_accent": false
+            },
+            {
+              "boundary_vertices": 36,
+              "perimeter_m": 0.6887230626458538,
+              "collar_accent": false
+            },
+            {
+              "boundary_vertices": 36,
+              "perimeter_m": 0.6889716194762532,
+              "collar_accent": false
+            }
+          ],
+          "thickness_m": 0.0014,
+          "return_depth_m": 0.012,
+          "added_vertices": 268,
+          "connected_components": 1,
+          "independent_trim_objects": 0
+        }
+      },
+      "KnitSock_L": {
+        "outward_component_winding_corrected": false,
+        "anatomical_fit": {
+          "before": {
+            "vertices": 1472,
+            "min_signed_m": -0.003969121004047338,
+            "inside_over_1mm": 22
+          },
+          "after": {
+            "vertices": 1472,
+            "min_signed_m": 0.0054501401464222,
+            "inside_over_1mm": 0
+          },
+          "openings": 2,
+          "maximum_clearance_shortfall_m": 4.9859853577799776e-05,
+          "fit_policy": "7 mm jersey ease, 3.5 mm inside the narrow axillary fold, up to 29 mm at the loose waist; shorts 7 mm, socks 5.5 mm",
+          "max_vertex_displacement_m": 0.014865093526383604
+        },
+        "connected_turnback": {
+          "openings": [
+            {
+              "boundary_vertices": 68,
+              "perimeter_m": 0.34998007800060604,
+              "collar_accent": false
+            },
+            {
+              "boundary_vertices": 36,
+              "perimeter_m": 0.37041978927852176,
+              "collar_accent": false
+            }
+          ],
+          "thickness_m": 0.0014,
+          "return_depth_m": 0.012,
+          "added_vertices": 208,
+          "connected_components": 1,
+          "independent_trim_objects": 0
+        }
+      },
+      "KnitSock_R": {
+        "outward_component_winding_corrected": false,
+        "anatomical_fit": {
+          "before": {
+            "vertices": 1476,
+            "min_signed_m": -0.00405446578952251,
+            "inside_over_1mm": 20
+          },
+          "after": {
+            "vertices": 1476,
+            "min_signed_m": 0.00545735637206235,
+            "inside_over_1mm": 0
+          },
+          "openings": 2,
+          "maximum_clearance_shortfall_m": 4.264362793764999e-05,
+          "fit_policy": "7 mm jersey ease, 3.5 mm inside the narrow axillary fold, up to 29 mm at the loose waist; shorts 7 mm, socks 5.5 mm",
+          "max_vertex_displacement_m": 0.015106101077930797
+        },
+        "connected_turnback": {
+          "openings": [
+            {
+              "boundary_vertices": 68,
+              "perimeter_m": 0.3498666199999558,
+              "collar_accent": false
+            },
+            {
+              "boundary_vertices": 36,
+              "perimeter_m": 0.3702548494089076,
+              "collar_accent": false
+            }
+          ],
+          "thickness_m": 0.0014,
+          "return_depth_m": 0.012,
+          "added_vertices": 208,
+          "connected_components": 1,
+          "independent_trim_objects": 0
+        }
+      },
+      "waist_overlap": {
+        "target_lateral_gap_m": 0.009,
+        "overlap_vertices": 165,
+        "minimum_tested_gap_m": 0.00899999421380926,
+        "shirt_hem_z_m": 1.046425461769104,
+        "shorts_waist_z_m": 1.0755475759506226
+      }
+    }
+  },
+  "map_rasterization": {
+    "skin": {
+      "resolution": [
+        2048,
+        2048
+      ],
+      "uv_covered_pixels": 2439350,
+      "uv_coverage_fraction": 0.5815863609313965,
+      "uv_multiple_coverage_pixels": 2,
+      "degenerate_uv_triangles": 0,
+      "padding_texels": 12,
+      "albedo_directional_lighting": false
+    },
+    "kit": {
+      "resolution": [
+        2048,
+        2048
+      ],
+      "uv_covered_pixels": 1956569,
+      "uv_coverage_fraction": 0.46648240089416504,
+      "uv_multiple_coverage_pixels": 10772,
+      "degenerate_uv_triangles": 0,
+      "padding_texels": 12,
+      "albedo_directional_lighting": false
+    },
+    "gear": {
+      "resolution": [
+        1024,
+        1024
+      ],
+      "uv_covered_pixels": 341264,
+      "uv_coverage_fraction": 0.3254547119140625,
+      "uv_multiple_coverage_pixels": 25,
+      "degenerate_uv_triangles": 0,
+      "padding_texels": 12,
+      "albedo_directional_lighting": false
+    }
+  },
+  "textures": [
+    {
+      "file": "gear_albedo.png",
+      "bytes": 140858,
+      "sha256": "8b75619a288e61786d453e199d8203b4dfa767f2f7da496e8d01cc635d547182"
+    },
+    {
+      "file": "gear_ao.png",
+      "bytes": 630473,
+      "sha256": "87aeb4c8769a9ec5f4d4d3c801a45b3af870cfe116a0be80c0f45fa63382beb5"
+    },
+    {
+      "file": "gear_normal.png",
+      "bytes": 117704,
+      "sha256": "6cce31a8e563d3b2862c7242def68fd70ba38b40605270cd95e4a726fefae4d6"
+    },
+    {
+      "file": "gear_orm.png",
+      "bytes": 673222,
+      "sha256": "3d1543d457bc533058c63b83094d61d472b1072dce40fcf4a5a8df3b73674483"
+    },
+    {
+      "file": "kit_albedo.png",
+      "bytes": 256800,
+      "sha256": "ba25827e1d536326fc580160794b2aa890cd5bd54675912296f077ddc54ec9c4"
+    },
+    {
+      "file": "kit_ao.png",
+      "bytes": 374716,
+      "sha256": "fddb6288fd67e91ec061d7d8de8157160d3691041da177aee4d88e04b73db459"
+    },
+    {
+      "file": "kit_mask.png",
+      "bytes": 200101,
+      "sha256": "0d841b0ef480ab15e5a455ad0eec77b101d1bc96f91b4d5304ba084480fce330"
+    },
+    {
+      "file": "kit_normal.png",
+      "bytes": 195970,
+      "sha256": "1059531dbe6daa33cee913afa629c9801b103f642162c61b1182b51e7f1fd613"
+    },
+    {
+      "file": "kit_orm.png",
+      "bytes": 1027257,
+      "sha256": "ad99902665e3ce12f7fb4eab2ab7b8c96a1180d4b6dbdc2a649656ae75fcf5d5"
+    },
+    {
+      "file": "skin_albedo.png",
+      "bytes": 255831,
+      "sha256": "71efb9f40acf0ec6b8e31114481a1991d01d149a5828dc16bd7ff1751ae3d507"
+    },
+    {
+      "file": "skin_ao.png",
+      "bytes": 535524,
+      "sha256": "03f7e776996be153e06d46bfe4a596bf7b38a9ec83b006d7783f935b997bb86f"
+    },
+    {
+      "file": "skin_normal.png",
+      "bytes": 1978822,
+      "sha256": "a0ed497d4f1b61f72bb670f70c9f6be1d2fe628d30cf6728bfdc07d77a48e67c"
+    },
+    {
+      "file": "skin_orm.png",
+      "bytes": 876753,
+      "sha256": "d0e4006e424717bf95c9c0558f3c76fa9c41d7bace86379504fdc062138890f1"
+    }
+  ],
+  "texture_contract": {
+    "albedo": "sRGB, neutral kit albedo; no baked lighting",
+    "normal": "Tangent +Y/OpenGL, Non-Color",
+    "orm": "linear R=restrained local AO; G=roughness; B=0 metallic",
+    "kit_mask": "Linear data COLOR0 -> glTF COLOR_0, RGBA normalized; never opacity/albedo.",
+    "ao_master": "1K actual CPU local-AO bake, 6.5cm distance; packed into ORM",
+    "kit_mask_binding": {
+      "representation": "Blender COLOR0 -> glTF COLOR_0 -> Godot COLOR, linear RGBA data",
+      "material": "AthleteKit",
+      "uv_set": null,
+      "source_path": null,
+      "runtime_path_after_permission": null,
+      "encoding": "FLOAT_COLOR authoring; RGBA normalized per exported vertex",
+      "color_space": "Non-Color/linear",
+      "alpha_is_opacity": false,
+      "channels": {
+        "R": "jersey primary",
+        "G": "shorts + existing narrow secondary jersey side panels",
+        "B": "socks",
+        "A": "bound trims"
+      },
+      "maps_retained": [
+        "kit_albedo.png (sRGB neutral)",
+        "kit_normal.png (+Y tangent)",
+        "kit_orm.png (linear R=AO G=roughness B=metallic)"
+      ],
+      "attribute_name": "COLOR0",
+      "gltf_attribute": "COLOR_0",
+      "authoring_domain": "CORNER",
+      "png_authoring_master": "maps/kit_mask.png",
+      "transfer_method": "Bilinear sampling of the existing PNG in UV0 at each mesh corner, then normalization; secondary jersey side panels preserved.",
+      "channel_sum": 1.0,
+      "generic_material_warning": "COLOR_0 is mask DATA, not ordinary albedo or opacity. Use the coordinator's kit shader; a generic glTF viewer may display mask colors."
+    },
+    "skin_normal_encoding": "RGBA8 opaque; RGB tangent normal preserved; alpha always 255."
+  },
+  "export_destination_only_after_permission": "game/assets/athletes/court_athlete/court_athlete.glb",
+  "exported_to_game": true,
+  "game_tested": false,
+  "source_inspection": {
+    "status": "final R3 CPU inspection completed; integrated review pending",
+    "report": ".dream-loop\\athlete-upgrade\\r3\\source-inspection.json",
+    "source_sha256": "88276733d1f8271a4a5481089dbf442fc6ee61252c28cedd75e69c9e12a309dd",
+    "views": [
+      "front",
+      "back",
+      "flex",
+      "detail"
+    ],
+    "renderer": "Cycles CPU",
+    "resolution": [
+      1024,
+      1024
+    ],
+    "samples": 24,
+    "structural_checks": [
+      18,
+      18
+    ],
+    "invalid_map_link_inspection_retained": ".dream-loop\\athlete-upgrade\\r3\\invalid-missing-map-links",
+    "art_rounds_used": 3,
+    "remaining_art_rounds": 0,
+    "independent_review": false,
+    "art_approved": false,
+    "honest_limits": [
+      "No white clothing tears observed in these source stance/flexion views; not a guarantee for every game pose.",
+      "Shoe opening outline remains irregular; boot geometry and retarget responsibility were preserved.",
+      "Hair retains a rigid helmet-like silhouette; it was not remodeled or credited as newly resolved detail in R3.",
+      "Cloth detail/blur and closure need EXE evidence on the R3 hash; later retarget captures using R2 do not establish the R3 result.",
+      "Kit atlas still reports 10772 multiply-covered texels; inspect seams in the native shader, not a proof of perfect UV layout.",
+      "Source skin does not show the runtime dotted pattern; no skin PBR compensation was applied.",
+      "Final EXE capture, independent review and FPS protocol remain pending for R3."
+    ],
+    "encoding_only_successor_source_sha256": "34b519c921b5101974e40cdd70ff6d576e6544ff032f28feb8f6d054ccc9b53f",
+    "encoding_note": "Images keep their original rendered source hash. The successor changes PNG encoding only; RGB and all scene parameters are identical."
+  },
+  "animations": [],
+  "limitations": [
+    "Final authorized R3 pass; no independent artistic approval or FPS evidence.",
+    "Clearance/closure in real retargeted motion must be reviewed on this R3 hash.",
+    "R2 native test/capture results do not certify the changed R3 mesh.",
+    "Retarget elbows, toe-out, sole height, skin tint/roughness and camera belong to coordination.",
+    "No facial rig, new motion clips, LODs or cloth/hair simulation."
+  ],
+  "reproduction_command": "blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art/source/athletes/court_athlete/build_athlete.py",
+  "contact_contract": {
+    "file": "rig_manifest.json",
+    "key": "contact_contract",
+    "schema_version": 2,
+    "source_sha256": "34b519c921b5101974e40cdd70ff6d576e6544ff032f28feb8f6d054ccc9b53f",
+    "validation": {
+      "checks": {
+        "Palm_L_bone_local_roundtrip": true,
+        "Palm_L_orthonormal_right_handed": true,
+        "Palm_L_gltf_conversion": true,
+        "Palm_L_position_axes_match_matrix": true,
+        "Palm_R_bone_local_roundtrip": true,
+        "Palm_R_orthonormal_right_handed": true,
+        "Palm_R_gltf_conversion": true,
+        "Palm_R_position_axes_match_matrix": true,
+        "Foot_L_bone_local_roundtrip": true,
+        "Foot_L_orthonormal_right_handed": true,
+        "Foot_L_gltf_conversion": true,
+        "Foot_L_position_axes_match_matrix": true,
+        "Foot_R_bone_local_roundtrip": true,
+        "Foot_R_orthonormal_right_handed": true,
+        "Foot_R_gltf_conversion": true,
+        "Foot_R_position_axes_match_matrix": true,
+        "Palm_L_inside_real_triangle": true,
+        "Palm_L_is_not_wrist": true,
+        "Palm_L_preserves_palm_target_-1.1": true,
+        "Palm_L_preserves_palm_target_-0.35": true,
+        "Palm_L_preserves_palm_target_0.55": true,
+        "Palm_L_preserves_palm_target_1.4": true,
+        "Palm_R_inside_real_triangle": true,
+        "Palm_R_is_not_wrist": true,
+        "Palm_R_preserves_palm_target_-1.1": true,
+        "Palm_R_preserves_palm_target_-0.35": true,
+        "Palm_R_preserves_palm_target_0.55": true,
+        "Palm_R_preserves_palm_target_1.4": true,
+        "rig_matches_declared_helper_variant": true
+      },
+      "passed": 29,
+      "total": 29,
+      "numerical_errors": {
+        "Palm_L_roundtrip_max_component": 1.7881393432617188e-07,
+        "Palm_R_roundtrip_max_component": 5.960464477539063e-08,
+        "Foot_L_roundtrip_max_component": 4.423782229423523e-08,
+        "Foot_R_roundtrip_max_component": 5.960464477539063e-08
+      },
+      "skinned_palm_diagnostic": {
+        "Palm_L": {
+          "max_surface_vs_bone_locator_m": 1.0323827311807139e-07,
+          "tested_local_wrist_angles_degrees": [
+            -35,
+            35
+          ],
+          "axes": [
+            "bone local X",
+            "bone local Z"
+          ],
+          "note": "Diagnostic of linear skinning, not acceptance of live catches/throws."
+        },
+        "Palm_R": {
+          "max_surface_vs_bone_locator_m": 9.541398640621973e-08,
+          "tested_local_wrist_angles_degrees": [
+            -35,
+            35
+          ],
+          "axes": [
+            "bone local X",
+            "bone local Z"
+          ],
+          "note": "Diagnostic of linear skinning, not acceptance of live catches/throws."
+        }
+      }
+    }
+  },
+  "source_bytes": 33950289,
+  "integration_contract_version": 2,
+  "driver_contract_adaptation": {
+    "validation": {
+      "checks": {
+        "Shin_L_direct_parent_Thigh": true,
+        "Foot_L_direct_parent_Shin": true,
+        "Toe_L_direct_parent_Foot": true,
+        "Forearm_L_direct_parent_UpperArm": true,
+        "Hand_L_direct_parent_Forearm": true,
+        "Palm_L_direct_parent_Hand": true,
+        "Palm_L_non_deforming": true,
+        "Palm_L_center": true,
+        "Palm_L_axes": true,
+        "Shin_R_direct_parent_Thigh": true,
+        "Foot_R_direct_parent_Shin": true,
+        "Toe_R_direct_parent_Foot": true,
+        "Forearm_R_direct_parent_UpperArm": true,
+        "Hand_R_direct_parent_Forearm": true,
+        "Palm_R_direct_parent_Hand": true,
+        "Palm_R_non_deforming": true,
+        "Palm_R_center": true,
+        "Palm_R_axes": true,
+        "bone_count_54": true,
+        "deforming_count_51": true,
+        "COLOR0_FLOAT_COLOR_CORNER": true,
+        "COLOR0_matches_authored_PNG_samples": true,
+        "COLOR0_linear_normalized": true,
+        "COLOR0_finite_in_range": true,
+        "COLOR0_all_four_zones_present": true,
+        "COLOR0_active_for_render": true,
+        "skin_gear_outside_kit_mask": true
+      },
+      "passed": 27,
+      "total": 27,
+      "color0": {
+        "authoring_domain": "CORNER (split to per-vertex COLOR_0 in glTF)",
+        "corners": 40533,
+        "float_bytes_in_source": 648528,
+        "max_normalization_error": 0.0,
+        "max_png_sample_error": 0.0,
+        "channel_min": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "channel_max": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "game_exported": true
+  },
+  "runtime_export": {
+    "manifest": "export_manifest.json",
+    "file": "game\\assets\\athletes\\court_athlete\\court_athlete.glb",
+    "source_sha256": "34b519c921b5101974e40cdd70ff6d576e6544ff032f28feb8f6d054ccc9b53f",
+    "glb_sha256": "72bb973ced0b5cb44d6871c23c9e1a8c3fb35db85adc7bc66673f74a61becc66",
+    "glb_bytes": 8038876,
+    "triangles": 43345,
+    "gltf_vertices": 31450,
+    "skin_joints": 54,
+    "approved_isolation": "Coordinacion 2026-09-15 16:11+02:00: R3 + normalizacion tecnica exclusiva skin_normal RGB8 a RGBA8 alpha255; RGB/geom/rest/UV/pesos intactos, sin nueva ronda artistica; reemplazo avisado y hashes finales obligatorios.",
+    "godot_import_tested": false,
+    "art_approved": false,
+    "fps_measured": false
+  },
+  "r3": {
+    "baseline_source_sha256": "55522a44d8e750283a632e7f3be0b85cdc054b614af7af0098adb2ae13c26ead",
+    "integrated_feedback_manifest": ".dream-loop\\athlete-upgrade\\builds\\r2-capture-c496a18b506c4b1ca6ecbf733906aa3a\\captures\\manifest.json",
+    "integrated_feedback_manifest_sha256": "c25f029e5cb3eb5c1cdfda01227666ba702a504adfc601cc466e42f9737df39c",
+    "feedback_is_independent_verdict": false,
+    "art_rounds_used": 3,
+    "remaining_art_rounds": 0,
+    "skin_and_gear_geometry_weights_uv_unchanged": {
+      "AthleteSkinMesh": "256c6031aa3d0dd1b539fd215f217c8803f544be662a48ecd686fa4c385ff266",
+      "AthleteGearMesh": "1a081b4b5b19dc67a6aa49538c33918f72d8934b2a2d155cffbb8d57b36c0900"
+    },
+    "all_54_rest_transforms_and_Palm_unchanged": true,
+    "skin_and_gear_master_maps_unchanged": {
+      "gear_albedo.png": "8b75619a288e61786d453e199d8203b4dfa767f2f7da496e8d01cc635d547182",
+      "gear_ao.png": "87aeb4c8769a9ec5f4d4d3c801a45b3af870cfe116a0be80c0f45fa63382beb5",
+      "gear_normal.png": "6cce31a8e563d3b2862c7242def68fd70ba38b40605270cd95e4a726fefae4d6",
+      "gear_orm.png": "3d1543d457bc533058c63b83094d61d472b1072dce40fcf4a5a8df3b73674483",
+      "skin_albedo.png": "71efb9f40acf0ec6b8e31114481a1991d01d149a5828dc16bd7ff1751ae3d507",
+      "skin_ao.png": "03f7e776996be153e06d46bfe4a596bf7b38a9ec83b006d7783f935b997bb86f",
+      "skin_orm.png": "d0e4006e424717bf95c9c0558f3c76fa9c41d7bace86379504fdc062138890f1"
+    },
+    "only_kit_five_maps_regenerated": true,
+    "skin_pore_or_gloss_compensation": false,
+    "kit_micro_normal_amplitude": {
+      "previous": 0.047,
+      "current": 0.015
+    },
+    "source_structural_validation": {
+      "checks": {
+        "one_rig": true,
+        "root_non_deforming": true,
+        "no_actions": true,
+        "no_source_camera_or_light": true,
+        "rest_pose_identity": true,
+        "object_transforms_applied": true,
+        "three_materials": true,
+        "influences_max_four": true,
+        "weights_normalized": true,
+        "geometry_hard_budget": true,
+        "no_unused_deforming_bones": true,
+        "adult_height": true,
+        "no_stray_meshes": true,
+        "soles_at_origin": true,
+        "skin_winding_matches_anatomical_source": true,
+        "skin_runtime_maps_resolve": true,
+        "kit_runtime_maps_resolve": true,
+        "gear_runtime_maps_resolve": true
+      },
+      "passed": 18,
+      "total": 18,
+      "visible_triangles": 43345,
+      "bounds_blender_m": [
+        [
+          -0.4425260126590729,
+          0.4423643946647644
+        ],
+        [
+          -0.1803087741136551,
+          0.1254173070192337
+        ],
+        [
+          -9.771389386514784e-07,
+          1.7459523677825928
+        ]
+      ],
+      "max_influences": 4,
+      "normalization_error": 4.470348358154297e-08,
+      "inverted_skin_faces": 0,
+      "unused_deforming_bones": []
+    },
+    "game_import_and_art_review_of_R3": "pending",
+    "scope": "Clothes only; no retarget, anatomy scaling, foot target, lighting, shader or physics edits.",
+    "technical_map_link_repair": {
+      "previous_source_sha256": "434827dd6b94ed3248f8417626b70ed632d4e6559996cc1f60ce66052a036931",
+      "source_sha256": "88276733d1f8271a4a5481089dbf442fc6ee61252c28cedd75e69c9e12a309dd",
+      "cause": "Blender // relative paths were incorrectly parsed as Windows UNC paths.",
+      "all_mesh_geometry_weights_uv_and_COLOR0_unchanged": {
+        "AthleteSkinMesh": "256c6031aa3d0dd1b539fd215f217c8803f544be662a48ecd686fa4c385ff266",
+        "AthleteKitMesh": "8d2a981f1ca073b5a841067b3bec97e4932183849924835c10aa2e6bc769cabb",
+        "AthleteGearMesh": "1a081b4b5b19dc67a6aa49538c33918f72d8934b2a2d155cffbb8d57b36c0900"
+      },
+      "map_pixels_changed": false,
+      "art_round_added": false,
+      "map_links": {
+        "skin_runtime_maps_resolve": true,
+        "kit_runtime_maps_resolve": true,
+        "gear_runtime_maps_resolve": true
+      }
+    },
+    "skin_normal_RGB_preserved_RGBA8_alpha255": {
+      "before": {
+        "width": 2048,
+        "height": 2048,
+        "bit_depth": 8,
+        "color_type": 2,
+        "png_sha256": "45dd854a76d8336caeacf1fd9ce3553ea10017c068f58d58753403298c1ece5e",
+        "png_bytes": 1679465,
+        "rgb_top_down_sha256": "896a3c750f3a216d621166a4b075eeff98e9502045de4dc8fec2129162897fd6",
+        "alpha_min": 255,
+        "alpha_max": 255
+      },
+      "after": {
+        "width": 2048,
+        "height": 2048,
+        "bit_depth": 8,
+        "color_type": 6,
+        "png_sha256": "a0ed497d4f1b61f72bb670f70c9f6be1d2fe628d30cf6728bfdc07d77a48e67c",
+        "png_bytes": 1978822,
+        "rgb_top_down_sha256": "896a3c750f3a216d621166a4b075eeff98e9502045de4dc8fec2129162897fd6",
+        "alpha_min": 255,
+        "alpha_max": 255
+      },
+      "rgb_changed": false,
+      "alpha_value": 255,
+      "encoding_only": true,
+      "rewritten": true
+    }
+  },
+  "publication_preparation": {
+    "target": "0.5.0-preview",
+    "scope": "Source/provenance hygiene and removal of redundant runtime PNG copies only.",
+    "source_and_GLB_unchanged": true,
+    "maps_geometry_rig_UV_weights_materials_unchanged": true,
+    "art_rounds_used": 3,
+    "art_rounds_added": 0,
+    "runtime_image_storage": "Nine PBR maps embedded in GLB; preserve Godot's nine extracted PNGs and their import settings beside the GLB. No exporter textures directory.",
+    "inventory": "build\\publication\\graphics05-assets\\inventory.json",
+    "independent_cleanup_review": "Pending Vasquez before publication by coordination.",
+    "history": "source_inspection, r3 and normal_encoding_normalization retain their dated evidence and original status. Removed runtime copies and previous current manifests are preserved locally under .dream-loop\\athlete-upgrade\\publication-cleanup, not published.",
+    "art_approved": false,
+    "fps_measured": false
+  },
+  "normal_encoding_normalization": {
+    "report": "normal_encoding_manifest.json",
+    "normal_png": {
+      "width": 2048,
+      "height": 2048,
+      "bit_depth": 8,
+      "color_type": 6,
+      "png_sha256": "a0ed497d4f1b61f72bb670f70c9f6be1d2fe628d30cf6728bfdc07d77a48e67c",
+      "png_bytes": 1978822,
+      "rgb_top_down_sha256": "896a3c750f3a216d621166a4b075eeff98e9502045de4dc8fec2129162897fd6",
+      "alpha_min": 255,
+      "alpha_max": 255
+    },
+    "RGB_unchanged": true,
+    "art_rounds_added": 0,
+    "previous_source_sha256": "88276733d1f8271a4a5481089dbf442fc6ee61252c28cedd75e69c9e12a309dd",
+    "classification": "R3 + technical normalization, not a new art pass"
+  }
+}

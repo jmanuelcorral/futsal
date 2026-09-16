@@ -10,6 +10,7 @@ const Event = preload("res://match/simulation/match_event.gd")
 const Rules = preload("res://match/simulation/match_rule_types.gd")
 const Tuning = preload("res://match/simulation/match_tuning.gd")
 const VisualTests = preload("res://tests/test_match_visuals.gd")
+const AthleteMaterials = preload("res://tests/athlete_test_materials.gd")
 
 var _checks: Array[Dictionary] = []
 var _check_names: Dictionary[String, bool] = {}
@@ -322,8 +323,8 @@ func _test_keeper_throw() -> void:
 			((_hand_world(view, 0) + _hand_world(view, 1)) * 0.5).distance_to(real_render_ball) < 0.025)
 		var right: Vector3 = facing * Vector3.RIGHT
 		_check("Portero %d agarre a ambos lados del ancla real" % id,
-			(_hand_world(view, 0) - real_render_ball).dot(right) < -Tuning.BALL_RADIUS
-			and (_hand_world(view, 1) - real_render_ball).dot(right) > Tuning.BALL_RADIUS)
+			absf((_hand_world(view, 0) - real_render_ball).dot(right) + Tuning.BALL_RADIUS) < 0.0001
+			and absf((_hand_world(view, 1) - real_render_ball).dot(right) - Tuning.BALL_RADIUS) < 0.0001)
 		var rejected: Event = Event.new()
 		rejected.kind = Event.Kind.PASS
 		rejected.launch_kind = Rules.LaunchKind.KEEPER_THROW
@@ -350,7 +351,7 @@ func _test_keeper_throw() -> void:
 		_present_tick(view, throw_actor, 70.0, anchor)
 		var release_hand: Vector3 = _hand_world(view, 1)
 		_check("Portero %d suelta con mano en el ancla del evento" % id,
-			release_hand.distance_to(anchor + right * (Tuning.BALL_RADIUS + 0.025)) < 0.025
+			release_hand.distance_to(anchor + right * Tuning.BALL_RADIUS) < 0.025
 			and view._gesture_kind == Rules.GestureKind.KEEPER_THROW)
 		var flying_ball: Vector3 = anchor + throw_actor.gesture_direction * 1.5
 		_present_tick(view, throw_actor, 75.0, flying_ball)
@@ -544,9 +545,11 @@ func _limbs_valid(view: Athlete) -> bool:
 	for node: Node in view.find_children("*", "Node3D", true, false):
 		if not (node as Node3D).transform.is_finite():
 			return false
-	for leg: Array in view._legs:
+	for side: int in view._legs.size():
+		var leg: Array = view._legs[side]
+		var lengths: Vector2 = view._skin_view.rig.leg_lengths[side]
 		for index: int in [0, 1]:
-			if (leg[index] as Node3D).basis.y.length() > Athlete.LEG_SEGMENT_LENGTH + 0.0001:
+			if absf((leg[index] as Node3D).basis.y.length() - lengths[index]) > 0.0001:
 				return false
 	return true
 
@@ -555,6 +558,8 @@ func _pose(view: Athlete) -> String:
 	var transforms: Array[Transform3D] = [view.transform]
 	for node: Node in view.find_children("*", "Node3D", true, false):
 		transforms.append((node as Node3D).transform)
+	for bone: int in view._skin_view.skeleton.get_bone_count():
+		transforms.append(view._skin_view.skeleton.get_bone_global_pose(bone))
 	return var_to_str([view._gait, transforms])
 
 
@@ -569,6 +574,10 @@ func _same_pose(a: Athlete, b: Athlete) -> bool:
 		for index: int in a._arms[side].size():
 			if not (a._arms[side][index] as Node3D).transform.is_equal_approx((b._arms[side][index] as Node3D).transform):
 				return false
+	for bone: int in a._skin_view.skeleton.get_bone_count():
+		if not a._skin_view.skeleton.get_bone_global_pose(bone).is_equal_approx(
+				b._skin_view.skeleton.get_bone_global_pose(bone)):
+			return false
 	return true
 
 
@@ -579,8 +588,8 @@ func _identity(view: Athlete) -> String:
 	identity.append((body.get_node("FrontNumber") as Label3D).text)
 	for node: Node in body.find_children("*", "MeshInstance3D", true, false):
 		var mesh: MeshInstance3D = node as MeshInstance3D
-		identity.append([mesh.get_instance_id(), mesh.mesh.get_instance_id(), mesh.material_override.get_instance_id(),
-			(mesh.material_override as StandardMaterial3D).albedo_color])
+		identity.append([mesh.get_instance_id(), mesh.mesh.get_instance_id(),
+			AthleteMaterials.surface_identity(mesh)])
 	return var_to_str(identity)
 
 

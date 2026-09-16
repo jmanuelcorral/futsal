@@ -1,0 +1,44 @@
+{
+  "bundle": "Human Base Meshes v1.4.1",
+  "official_page": "https://www.blender.org/download/demo-files/#assets",
+  "official_archive": "https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip",
+  "archive_bytes": 50643039,
+  "archive_sha256": "811f43accbb31a88266d932f8f5563b2d13586fca0ba2693aad1f5fe582b3515",
+  "blend_member": "human-base-meshes-bundle-v1.4.1/human_base_meshes_bundle.blend",
+  "blend_bytes": 49420489,
+  "blend_sha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+  "chosen_collection": "Body Male - Realistic",
+  "author": "Dan Ulrich",
+  "publisher": "Blender Studio and community contributions",
+  "asset_license": "CC0",
+  "license_scope": "CC0-1.0 applies to the upstream Body Male - Realistic base. No general reuse license is assigned to the project's own code/art adaptation; see THIRD_PARTY_NOTICES.md.",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "asset_description_verbatim": "Realistic scan data model with multiresolution details",
+  "chosen_objects": [
+    "GEO-body_male_realistic",
+    "GEO-body_male_realistic.eye.L",
+    "GEO-body_male_realistic.eye.R"
+  ],
+  "body_mesh_datablock_original": "female_v006lowresUV",
+  "body_mesh_fingerprint": {
+    "format": "float32 LE xyz vertices, then uint32 LE face lengths/indices",
+    "sha256": "e180f87567f1c3099a825f55d9712e9247e9361b9f291f802f108e7c0a487c8c"
+  },
+  "license_evidence": [
+    "Official page: Human Base Meshes v1.4.1, Blender Studio and community, CC0, requires 4.2+.",
+    "Embedded README: All provided assets are public domain under the CC0 license.",
+    "Body Male - Realistic AssetMetaData: author Dan Ulrich, license CC0."
+  ],
+  "upstream_text_discrepancy": "Unrelated embedded 'License' text mentions Rain Rig CC-BY 4.0. No Rain Rig, scene, script or animation is used; chosen collection explicitly declares CC0. Preserved for independent provenance review.",
+  "upstream_has_rig_or_actions": false,
+  "downloaded_code_executed": false,
+  "adaptation": [
+    "One scaled anatomical base with original face/ears/fingers retained",
+    "Own garment shaping, gusseted shorts, socks, crop, shoes, seams and laces",
+    "Own 54-bone humanoid rig (51 deforming; Root/Palm_L/Palm_R helpers), skin weights, UV atlases and baked PBR maps"
+  ],
+  "private_reference": "User quality reference inspected locally only, not copied, bundled or uploaded.",
+  "api_cost": 0,
+  "integration_contract": "Own rig: 54 bones, 51 deforming; Root and Palm_L/R helpers non-deforming. Own COLOR0 data copied from the authored PNG mask.",
+  "r3_tailoring": "Own anatomical cloth clearance, connected turnbacks, inherited weights and quiet kit weave; source skin/gear/rig rest unchanged."
+}

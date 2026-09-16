@@ -50,7 +50,7 @@ foreach ($case in $cases.Keys) {
     if (($disk | ConvertTo-Json -Compress -Depth 32) -cne ($report | ConvertTo-Json -Compress -Depth 32) -or
         $report['ok'] -isnot [bool] -or $report['ok'] -or $report['driver_start_calls'] -ne 0 -or
         $report['main_scene'] -ne 'res://match/match.tscn' -or
-        $report['scope'] -ne 'playable-preview-runtime-smoke' -or $report['project_version'] -ne '0.4.0-preview' -or
+        $report['scope'] -ne 'playable-preview-runtime-smoke' -or $report['project_version'] -ne '0.5.0-preview' -or
         ($report['input_schema_version'] -isnot [long] -and $report['input_schema_version'] -isnot [int]) -or
         $report['input_schema_version'] -ne 3 -or
         $report['default_entrypoint']['verified'] -ne $false -or

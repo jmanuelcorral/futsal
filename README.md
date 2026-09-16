@@ -14,6 +14,23 @@ sus checksums e instrucciones. Son **previews experimentales**, no el MVP final.
 La compilación reproducible y los límites de validación/firma de cada plataforma
 se documentan en [Distribución](https://github.com/jmanuelcorral/futsal/blob/main/docs/DISTRIBUTION.md).
 No necesitas Blender ni un editor de Godot para ejecutar los paquetes.
+La fuente actual corresponde a **0.5.0-preview**, con los atletas articulados R3.
+Las descargas históricas de **0.4** conservan la representación anterior.
+
+## Atletas de la preview gráfica
+
+![Detalle del atleta articulado en el candidato local 0.5](docs/images/athletes-0.5-detail.png)
+
+Detalle con **cámara diagnóstica**, no la cámara habitual de juego, en la micro
+de cuatro atletas. Malla humana continua, equipación y materiales PBR de la
+adaptación R3; pelo, manos y acabados siguen pendientes.
+
+![Los diez atletas en la vista de retransmisión 5v5 del candidato local 0.5](docs/images/athletes-0.5-5v5.png)
+
+Vista de retransmisión del **5v5 experimental, diez atletas**. Ambas imágenes son
+capturas sin retocar del candidato local Windows **0.5.0-preview**, EXE
+`165a31dfa21b09b6d056a8bb202e188827143477b53ca2ecad13fb4d22d45208`,
+a 1920×1080 con Forward+. No son un benchmark ni una aprobación artística.
 
 ## Qué se está construyendo
 
@@ -29,23 +46,24 @@ No necesitas Blender ni un editor de Godot para ejecutar los paquetes.
 
 Son requisitos, **no funcionalidades ya implementadas**.
 
-## Estado real — 14 de septiembre de 2026
+## Estado real — 16 de septiembre de 2026
 
 | Área | Disponible / pendiente |
 |---|---|
 | Decisión de stack | Godot **4.7.2**, Forward+, GDScript tipado y Jolt a 60 Hz; elección revisable, no benchmark |
 | Blender/MCP | Blender **4.5.13 LTS** instalado; corrección MCP Windows migrada, probada con concurrencia real y **aceptada formalmente por Vasquez**; evidencia en [TOOLING](https://github.com/jmanuelcorral/futsal/blob/main/docs/TOOLING.md) |
-| dream-loop | Skill MIT vendorizada sin modificar; bucle visual no ejecutado |
+| dream-loop | Skill MIT vendorizada sin modificar; sin referencia A-G2/A-G3 comparable aprobada ni puntuación visual de producto |
 | Godot y diagnóstico | **Verificado**: Godot 4.7.2 estándar, templates Windows y bootstrap debug exportado, con comprobación independiente de coordinación. No es un juego |
 | Base G1 histórica | Micro 1v1 + dos porteros, controles, cámara y HUD, validada el 9/9. Representación provisional; sin audio. Contrato en [MICRO_SLICE](https://github.com/jmanuelcorral/futsal/blob/main/docs/MICRO_SLICE.md) |
 | Build G1 preservada | `build\windows\FutsalG1-20260909.exe`: copia histórica conservada por coordinación para comparar antes/después; no es la preview |
 | Preview 0.2.0 histórica | Diez cuerpos/nueve IA, micro, Desarrollo y mejoras provisionales de parqué, iluminación/sombras y sprint, aprobados técnicamente. Coordinación conserva la build byte a byte en `build\windows\FutsalPreview-0.2.0.exe` |
 | Preview 0.3.0 histórica | **0.3.0-preview / input schema 2**: cambio de jugador y pase con transferencia de foco, incluido portero manual. Fuente, ejecutable y GPU verificados; contrato en [DEVELOPMENT_PLAN §4.2](https://github.com/jmanuelcorral/futsal/blob/main/docs/DEVELOPMENT_PLAN.md) |
 | Build 0.3.0 preservada | `build\windows\FutsalPreview-0.3.0.exe`, copia byte-idéntica de **103387808 bytes**, con identidad y evidencia en [TOOLING](https://github.com/jmanuelcorral/futsal/blob/main/docs/TOOLING.md) |
-| Salida activa | `build\windows\FutsalG1.exe`: **0.4.0-preview / input schema 3**, comprobada en fuente, EXE, GPU y arranque normal. Copia fija `build\windows\FutsalPreview-0.4.0.exe` |
-| Revisión técnica | **Cerrada por Vasquez**: fuentes aprobadas y aprobación estructural del paquete 0.4. Pipeline integral **196/196**, con bandas/córners/meta, regates, faltas y regresiones de pase/foco. No aceptación humana, artística o de FPS |
+| Salida local 0.4 preservada | `build\windows\FutsalG1.exe`: **0.4.0-preview / input schema 3**. Copia fija `build\windows\FutsalPreview-0.4.0.exe`; no se sustituye al preparar la preview gráfica |
+| Revisión técnica 0.4 histórica | **Cerrada por Vasquez**: fuentes aprobadas y aprobación estructural del paquete 0.4. Pipeline integral **196/196**, con bandas/córners/meta, regates, faltas y regresiones de pase/foco. No aceptación humana, artística o de FPS |
 | Jugabilidad 0.4 | IA aliada pasadora, bandas/córners/meta, regates, faltas/libres/penaltis/acumuladas, cámara de córner y guía de apuntado implementados en ambos modos según el [plan §4.3](https://github.com/jmanuelcorral/futsal/blob/main/docs/DEVELOPMENT_PLAN.md). No es el MVP completo |
-| Gates de producto | Sin referencia A-G2 aprobada, puntuación visual ni aceptación humana de sensación |
+| Fuente gráfica 0.5 | Atleta humano con skinning, rig de 54 huesos, materiales PBR, ajustes de sprint/contactos, TAA y sombras filtradas. Base anatómica Blender Studio CC0 adaptada; no se copian activos de otros juegos. Conserva la jugabilidad y el input schema 3 |
+| Gates de producto | Tras tres rondas de atletas siguen pendientes pelo, manos y acabados, referencia A-G2/A-G3, puntuación visual, rendimiento y aceptación humana |
 
 Una conexión MCP o un ejecutable diagnóstico **no acreditan gameplay ni arte**.
 El objetivo es 1080p60 medido; no se ha verificado ni se deduce del hardware.
@@ -55,41 +73,44 @@ releases publicadas tienen sus propios paquetes, hashes y resultados de CI.
 
 ## Inicio rápido
 
-La ruta compatible ejecuta el laboratorio **0.4**:
+Para jugar, descarga y extrae el paquete de tu sistema desde GitHub Releases.
+En Windows abre `Futsal.exe`; en Linux conserva `Futsal.pck` junto a
+`Futsal.x86_64`; en macOS abre `Futsal.app`. Consulta sus avisos de firma
+y el modo debug explícito de Linux en Distribución.
 
-```powershell
-.\build\windows\FutsalG1.exe
-```
-
-La copia fija actual es `.\build\windows\FutsalPreview-0.4.0.exe`.
-Las entregas anteriores se conservan sin cambios en
-`.\build\windows\FutsalPreview-0.3.0.exe`,
-`.\build\windows\FutsalPreview-0.2.0.exe` y el G1 de cuatro atletas
-`.\build\windows\FutsalG1-20260909.exe`. Los resultados de 0.3 no se atribuyen a 0.4.
-No necesita reinstalar el stack. Para desarrollar:
+Las rutas `build\windows\...` son entregas del entorno local, no ejecutables
+incluidos en el clon. Las copias G1/0.2/0.3/0.4 y la R3 local se conservan para
+comparar; sus resultados no se atribuyen automáticamente a una nueva release.
+Para desarrollar:
 
 1. Lee [Herramientas locales](https://github.com/jmanuelcorral/futsal/blob/main/docs/TOOLING.md): requisitos, versiones, instalación,
    lanzadores y pruebas. No instalar otros motores.
 2. Para Blender/MCP, sigue allí **«Utilizar en la próxima sesión»** y **«Verificar»**.
    Procesos locales bajo demanda; la aceptación técnica de MCP no acredita el juego.
-3. Abre `game\project.godot` o ejecuta el main del laboratorio desde la raíz:
+3. Recupera los assets versionados con Git LFS antes de importar:
+
+   ```powershell
+   git lfs pull
+   ```
+
+   Abre `game\project.godot` o ejecuta el main del laboratorio desde la raíz:
 
    ```powershell
    pwsh -NoProfile -File .\tools\godot\Start-Godot.ps1 -RunGame
    ```
 
    El bootstrap sigue siendo un diagnóstico separado, no la escena principal.
-   Fuente y guardas requieren 0.4/schema 3; una configuración anterior no
+   Fuente y guardas requieren 0.5/schema 3; una configuración anterior no
    sustituye su validación. El cierre integral del ejecutable se registra en TOOLING.
    `Test-Godot.ps1` exporta únicamente un diagnóstico aislado. `Test-MicroSlice.ps1`
    valida primero un candidato aislado y solo después lo promueve a la ruta
    compatible, conservando los bytes anteriores; no sustituye la build al empezar.
-4. Trabaja solo en paquetes autorizados con revisor. Fuentes futuras: `art\source\`;
+4. Trabaja solo en paquetes autorizados con revisor. Fuentes de autoría: `art\source\`;
    `.glb` runtime: `game\assets\`.
 
 ## Modos y controles del laboratorio
 
-Disponibles en **0.4**, conservando el pase/cambio de la entrega 0.3:
+La preview gráfica **0.5** conserva la jugabilidad **0.4** y el pase/cambio de 0.3:
 
 - **5v5 experimental**, predeterminado: diez cuerpos físicos, seleccionado inicial
   `0`, cuatro jugadores de campo por equipo y dos porteros. Puede controlarse
@@ -197,13 +218,13 @@ aprobada ni generador habilitado. G3 necesitará su referencia de diez atletas:
 no comparar cuatro contra diez. Dream-loop exige crítico independiente, escalera
 de cinco tiers y nota ≥ 8 **más** rendimiento; movimiento y mando se prueban aparte.
 Máximo 3 rondas por gate, parada tras 2 sin mejora y presupuesto de API **0**.
-El laboratorio experimental 5v5, Desarrollo, pase/foco y jugabilidad **0.4**
-son una prueba acotada, **no una aceptación G2/G3**. La implementación y las
+El laboratorio experimental 5v5, Desarrollo, pase/foco, jugabilidad **0.4**
+y atletas **0.5** son una prueba acotada, **no una aceptación G2/G3**. La implementación y las
 pruebas técnicas tampoco conceden aceptación humana, artística o de rendimiento.
 La build disponible no incorpora editor de equipos, progresión, XP, red,
 dificultades ni juego completo o arte final aprobado. La publicación pública y
-las releases fueron autorizadas el 15/9; no autorizan servicios pagados ni nuevos
-sistemas de producto.
+las releases fueron autorizadas el 15/9 y la publicación de los cambios gráficos
+el 16/9; no autorizan servicios pagados ni nuevos sistemas de producto.
 
 ## Alcance público y licencias
 
@@ -214,5 +235,6 @@ para abrir `game\project.godot` o compilar una release.
 
 Esta publicación no asigna automáticamente una licencia de reutilización al
 código o arte propios del juego. Las dependencias y el contenido de terceros
-conservan sus licencias; los paquetes incluyen los avisos del motor Godot y de
-sus componentes. La skill dream-loop vendorizada mantiene su licencia MIT.
+conservan sus licencias; los paquetes gráficos incluyen los avisos del motor
+Godot, sus componentes y la base anatómica CC0 en `THIRD_PARTY_NOTICES.md`.
+La skill dream-loop vendorizada mantiene su licencia MIT.

@@ -25,13 +25,15 @@ from .common import (
 from .process import WindowsAvailability, recorded_process, run_process
 from .smoke import godot_output, validate_producers, validate_report
 from .source import (
-    CONSUMED_PATHS, committed_inputs, require_git_root, snapshot_digest, source_snapshot, verify_committed_inputs,
+    CONSUMED_PATHS, PROJECT_NOTICES_MAX_BYTES, PROJECT_NOTICES_NAME, committed_inputs, require_git_root,
+    requires_project_notices, snapshot_digest, source_documents, source_snapshot, verify_committed_inputs,
 )
 
 HERE = Path(__file__).resolve().parent
 PLATFORMS = ("windows-x86_64", "linux-x86_64", "macos-universal")
 STAGES = ("source-legacy", "source-gameplay", "packaged-legacy", "packaged-gameplay")
 BUILD_PROVENANCE_FIELDS = ("templateEntry", "templateSha256", "engineWorkaround")
+DOCUMENT_PROVENANCE_FIELDS = ("thirdPartyNotices", "sourceDocumentsSha256")
 
 
 def preserve_inventory(repository: Path) -> dict[str, str]:
@@ -105,6 +107,23 @@ def _validate_build_variant(metadata: dict[str, Any], variant: dict[str, Any], l
     for key, expected in variant.items():
         require(json_equal(metadata.get(key), expected),
                 f"{label}: {key} no corresponde a la variante autorizada.")
+
+
+def _validate_document_metadata(metadata: dict[str, Any], identity: dict[str, Any], label: str) -> None:
+    if not requires_project_notices(identity):
+        require(all(metadata.get(key) is None for key in DOCUMENT_PROVENANCE_FIELDS),
+                f"{label}: una version historica no acredita nueva procedencia de avisos.")
+        return
+    notice = metadata.get("thirdPartyNotices")
+    require(type(notice) is dict and set(notice) == {"source", "packaged", "bytes", "sha256", "normalizedSha256"},
+            f"{label}: falta metadata completa de THIRD_PARTY_NOTICES.md.")
+    require(notice["source"] == PROJECT_NOTICES_NAME and notice["packaged"] == PROJECT_NOTICES_NAME,
+            f"{label}: ruta de avisos no autorizada.")
+    require(integer(notice["bytes"], label + ".thirdPartyNotices.bytes", 1) <= PROJECT_NOTICES_MAX_BYTES,
+            f"{label}: avisos demasiado grandes.")
+    for value in (notice["sha256"], notice["normalizedSha256"], metadata.get("sourceDocumentsSha256")):
+        require(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None,
+                f"{label}: hash de avisos/snapshot invalido.")
 
 
 def export_arguments(editor: Path, project: Path, payload: Path, target: dict[str, Any]) -> list[str]:
@@ -349,13 +368,27 @@ def inspect_packaged_payload(archive_path: Path, target: dict[str, Any], metadat
             "signing", "projectLicense", "licensePolicy", "validationEvidenceFile", "limitations",
         }
         _validate_build_variant(embedded, build_variant(target, metadata), "BUILD.json")
-        require(required <= set(embedded) <= required | set(BUILD_PROVENANCE_FIELDS) and
-                all(json_equal(metadata[key], embedded[key]) for key in required),
+        _validate_document_metadata(embedded, metadata, "BUILD.json")
+        if requires_project_notices(metadata):
+            required.update(DOCUMENT_PROVENANCE_FIELDS)
+        require(required <= set(embedded) <= required | set(BUILD_PROVENANCE_FIELDS) | set(DOCUMENT_PROVENANCE_FIELDS) and
+                all(json_equal(metadata[key], embedded[key]) for key in required) and
+                all(json_equal(metadata.get(key), embedded.get(key)) for key in DOCUMENT_PROVENANCE_FIELDS),
                 "BUILD.json y evidencia discrepan.")
         for item in manifest["licenses"]:
             require(contents[item["name"]]["bytes"] == item["bytes"] and
                     hashlib.sha512(archive.read(item["name"])).hexdigest() == item["sha512"],
                     "Licencia/avisos oficiales alterados o ausentes.")
+        if requires_project_notices(metadata):
+            notice = metadata["thirdPartyNotices"]
+            require(PROJECT_NOTICES_NAME in contents and contents[PROJECT_NOTICES_NAME]["kind"] == "file" and
+                    contents[PROJECT_NOTICES_NAME]["bytes"] == notice["bytes"],
+                    "Falta THIRD_PARTY_NOTICES.md integro y regular en el paquete.")
+            data = archive.read(PROJECT_NOTICES_NAME)
+            normalized = data.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
+            require(hashlib.sha256(data).hexdigest() == notice["sha256"] and
+                    hashlib.sha256(normalized).hexdigest() == notice["normalizedSha256"],
+                    "THIRD_PARTY_NOTICES.md no corresponde a su contenido y snapshot.")
         if metadata["licensePolicy"] == "project-file":
             license_info = metadata["projectLicense"]
             require(license_info["packaged"] == "GAME_LICENSE.txt" and
@@ -387,7 +420,12 @@ def _smoke(executable: Path, project: Path | None, proof: Path, name: str,
 
 
 def _notices(repository: Path, payload: Path, manifest: dict[str, Any], cache: Path,
-             platform_id: str) -> dict[str, Any] | None:
+             platform_id: str, *, identity: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    _documents, third_party_notices = source_documents(repository, identity)
+    if third_party_notices is not None:
+        shutil.copyfile(repository / PROJECT_NOTICES_NAME, payload / PROJECT_NOTICES_NAME)
+        require(digest(payload / PROJECT_NOTICES_NAME) == third_party_notices["sha256"],
+                "Los avisos del proyecto cambiaron durante la copia.")
     for item in manifest["licenses"]:
         shutil.copyfile(obtain(item, cache), payload / item["name"])
     licenses = [repository / name for name in ("LICENSE", "LICENSE.txt", "LICENSE.md")]
@@ -404,6 +442,8 @@ def _notices(repository: Path, payload: Path, manifest: dict[str, Any], cache: P
         "sus avisos y los de terceros. Esos permisos NO asignan licencia al juego.\n"
         + ("La licencia del proyecto esta en GAME_LICENSE.txt.\n" if found else
            "El proyecto no declara licencia propia. El tooling no asigna una ni concede derechos sobre el juego.\n")
+        + ("THIRD_PARTY_NOTICES.md conserva integros los avisos del proyecto y la procedencia de la base humana.\n"
+           if third_party_notices is not None else "")
         + "\nEl laboratorio no tiene audio. Teclado/mando: controles en pantalla y F1.\n"
         "La prueba automatica es headless; no acredita GPU, 60 FPS, mando fisico o arte.\n"
         "No iniciar normalmente con --fixed-fps, --smoke-test ni --gameplay-smoke.\n"
@@ -426,7 +466,7 @@ def _notices(repository: Path, payload: Path, manifest: dict[str, Any], cache: P
             "hacerlo solo tras verificar procedencia y checksum. No desactivar Gatekeeper globalmente.\n"
         )
     (payload / "README_ES.txt").write_text(message, encoding="utf-8", newline="\n")
-    return project_license
+    return project_license, third_party_notices
 
 
 def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
@@ -449,10 +489,14 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
     destination = output / "dist" / platform_id
     require(not destination.exists(), f"No se sobrescribe una release: {destination}")
     original = source_snapshot(repository / "game")
+    original_documents, original_notices = source_documents(repository, identity)
     if actual_commit is not None:
         expected_inputs = committed_inputs(repository, actual_commit)
         require(original == {name.removeprefix("game/"): value for name, value in expected_inputs.items()
                              if name.startswith("game/")}, "La fuente cambio despues de verificar el commit.")
+        if original_notices is not None:
+            require(original_documents == {PROJECT_NOTICES_NAME: expected_inputs[PROJECT_NOTICES_NAME]},
+                    "Los avisos fuente no corresponden al commit verificado.")
     protected = preserve_inventory(repository)
     run_id = uuid.uuid4().hex
     proof = output / "proof" / platform_id / run_id
@@ -460,6 +504,8 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
     work_root = output / "work"
     work_root.mkdir(parents=True, exist_ok=True)
     write_json(proof / "source-snapshot.json", original)
+    if original_notices is not None:
+        write_json(proof / "source-documents.json", original_documents)
     availability = WindowsAvailability()
     try:
         with tempfile.TemporaryDirectory(prefix=platform_id + "-", dir=work_root) as temporary:
@@ -497,13 +543,17 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
                 )
                 godot_output(exported)
                 signing = validate_native_payload(payload, target, proof, environment, "export")
-                project_license = _notices(repository, payload, manifest, cache, platform_id)
+                project_license, packaged_notices = _notices(
+                    repository, payload, manifest, cache, platform_id, identity=identity)
+                require(json_equal(packaged_notices, original_notices), "Los avisos del proyecto cambiaron durante el build.")
                 package_name = f"futsal-{identity['tag']}-{platform_id}"
                 build_info = {
                     "schemaVersion": 1, **identity, "platform": platform_id, **variant,
                     "commit": actual_commit, "sourceSnapshotSha256": snapshot_digest(original),
                     "engine": manifest["engine"]["versionOutput"], "engineEdition": "standard",
                     "signing": signing, "projectLicense": project_license,
+                    "thirdPartyNotices": packaged_notices,
+                    "sourceDocumentsSha256": snapshot_digest(original_documents) if original_notices is not None else None,
                     "licensePolicy": "project-file" if project_license is not None else "not-defined",
                     "validationEvidenceFile": package_name + ".build.json",
                     "limitations": ["Sin aceptacion humana, artistica ni de FPS.",
@@ -529,6 +579,9 @@ def build(repository: Path, platform_id: str, output: Path, cache: Path, *,
                 )
                 require(tree_index(installation) == contents, "El recorrido modifico el paquete instalado.")
             require(source_snapshot(repository / "game") == original, "La fuente original cambio durante el build.")
+            current_documents, current_notices = source_documents(repository, identity)
+            require(json_equal(current_documents, original_documents) and json_equal(current_notices, original_notices),
+                    "Los avisos fuente cambiaron antes de entregar el candidato.")
             require(preserve_inventory(repository) == protected, "Se modifico un debug/historico o release.json previo.")
             if actual_commit is not None:
                 require(commit_identity(repository, actual_commit, False) == actual_commit,
@@ -571,19 +624,23 @@ def audit_candidate(repository: Path, archive: Path, *, commit: str | None = Non
     metadata = read_json(archive.with_name(archive.stem + ".build.json"))
     required_commit = commit if commit is not None else metadata["commit"]
     expected = None
+    expected_documents = None
     if required_commit is not None:
         commit_identity(repository, required_commit, False)
-        expected = _committed_game_snapshot(repository, required_commit)
-    return _audit_candidate(repository, archive, commit=commit, tag=tag, expected_source=expected)
+        expected, expected_documents = _committed_source_snapshots(repository, required_commit)
+    return _audit_candidate(repository, archive, commit=commit, tag=tag, expected_source=expected,
+                            expected_documents=expected_documents)
 
 
-def _committed_game_snapshot(repository: Path, commit: str) -> dict[str, str]:
-    return {name.removeprefix("game/"): value for name, value in committed_inputs(repository, commit).items()
-            if name.startswith("game/")}
+def _committed_source_snapshots(repository: Path, commit: str) -> tuple[dict[str, str], dict[str, str]]:
+    inputs = committed_inputs(repository, commit)
+    return ({name.removeprefix("game/"): value for name, value in inputs.items() if name.startswith("game/")},
+            {name: value for name, value in inputs.items() if name == PROJECT_NOTICES_NAME})
 
 
 def _audit_candidate(repository: Path, archive: Path, *, commit: str | None,
-                     tag: str | None, expected_source: dict[str, str] | None) -> dict[str, Any]:
+                     tag: str | None, expected_source: dict[str, str] | None,
+                     expected_documents: dict[str, str] | None) -> dict[str, Any]:
     identity = project_identity(repository / "game", tag)
     manifest = load_manifest(HERE / "manifest.json")
     contract = read_json(HERE / "smoke-contract.json")
@@ -596,6 +653,7 @@ def _audit_candidate(repository: Path, archive: Path, *, commit: str | None,
     target = manifest["platforms"][platform_id]
     variant = build_variant(target, identity)
     _validate_build_variant(metadata, variant, "Metadata de candidato")
+    _validate_document_metadata(metadata, identity, "Metadata de candidato")
     require(archive.name == f"futsal-{identity['tag']}-{platform_id}.zip", "Nombre de paquete incorrecto.")
     checksum = digest(archive)
     require(archive.with_suffix(".sha256").read_text(encoding="ascii") == checksum + "  " + archive.name + "\n",
@@ -633,6 +691,15 @@ def _audit_candidate(repository: Path, archive: Path, *, commit: str | None,
     require(snapshot_digest(snapshot) == metadata["sourceSnapshotSha256"], "Snapshot de fuente incorrecto.")
     if expected_source is not None:
         require(json_equal(snapshot, expected_source), "La fuente archivada no corresponde al commit del checkout.")
+    if requires_project_notices(identity):
+        documents = read_json(proof_root / "source-documents.json")
+        require(json_equal(documents, {PROJECT_NOTICES_NAME: metadata["thirdPartyNotices"]["normalizedSha256"]}) and
+                snapshot_digest(documents) == metadata["sourceDocumentsSha256"],
+                "Snapshot de avisos incompleto o distinto de su metadata.")
+        if expected_documents is None:
+            expected_documents, _notice = source_documents(repository, identity)
+        require(json_equal(documents, expected_documents),
+                "Los avisos archivados no corresponden a la fuente/commit del checkout.")
     _version_process, version_text, _ = process_files(proof_root / "engine-version")
     require(version_text.strip() == manifest["engine"]["versionOutput"], "Version nativa archivada incorrecta.")
     import_process, _, _ = process_files(proof_root / "import")
@@ -684,22 +751,26 @@ def verify_collection(repository: Path, directory: Path, commit: str, tag: str |
     require(len(list(directory.rglob("*.zip"))) == 3 and set(archives) == expected,
             "Se requieren exactamente los tres ZIP de release, sin extras/duplicados.")
     commit_identity(repository, commit, False)
-    expected_source = _committed_game_snapshot(repository, commit)
+    expected_source, expected_documents = _committed_source_snapshots(repository, commit)
     entries = []
     source_hashes = set()
     for platform_id in PLATFORMS:
         stem = f"futsal-{identity['tag']}-{platform_id}"
         archive = archives[stem + ".zip"]
-        metadata = _audit_candidate(repository, archive, commit=commit, tag=tag, expected_source=expected_source)
+        metadata = _audit_candidate(repository, archive, commit=commit, tag=tag, expected_source=expected_source,
+                                    expected_documents=expected_documents)
         checksum = metadata["archiveSha256"]
         source_hashes.add(metadata["sourceSnapshotSha256"])
         entries.append({"platform": platform_id, "archive": archive.name, "sha256": checksum,
                         "bytes": archive.stat().st_size, "buildType": metadata["buildType"],
                         "templateEntry": metadata.get("templateEntry"),
                         "templateSha256": metadata.get("templateSha256"),
-                        "engineWorkaround": metadata.get("engineWorkaround")})
+                        "engineWorkaround": metadata.get("engineWorkaround"),
+                        "thirdPartyNotices": metadata.get("thirdPartyNotices"),
+                        "sourceDocumentsSha256": metadata.get("sourceDocumentsSha256")})
     require(len(source_hashes) == 1, "Las tres plataformas no consumieron la misma fuente.")
     return {"schemaVersion": 1, "ok": True, **identity, "commit": commit,
             "sourceSnapshotSha256": next(iter(source_hashes)), "archives": entries,
+            "sourceDocumentsSha256": snapshot_digest(expected_documents) if requires_project_notices(identity) else None,
             "published": False, "technicalReviewPending": True,
             "scope": "Comprobacion de artefactos/protocolos archivados; no ejecucion nueva ni aceptacion humana/arte/FPS."}

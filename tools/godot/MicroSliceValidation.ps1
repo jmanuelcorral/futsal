@@ -155,7 +155,7 @@ function Assert-GodotSimulationRefusals($Result, [System.Collections.IDictionary
 }
 
 function Get-GodotPlayerControlNegativeCases {
-    param([ValidateSet('0.3.0-preview', '0.4.0-preview')][string]$ProjectVersion = '0.4.0-preview')
+    param([ValidateSet('0.3.0-preview', '0.4.0-preview', '0.5.0-preview')][string]$ProjectVersion = '0.5.0-preview')
     $contact = if ($ProjectVersion -ceq '0.3.0-preview') {
         'A kick requires possession and reachable ball contact'
     } else { 'Launch refused: unreachable_ball' }
@@ -174,7 +174,7 @@ function Get-GodotPlayerControlNegativeCases {
 }
 
 function Assert-GodotPlayerControlReport([System.Collections.IDictionary]$Report,
-    [string]$ProjectVersion = '0.4.0-preview', [int]$InputSchemaVersion = 3) {
+    [string]$ProjectVersion = '0.5.0-preview', [int]$InputSchemaVersion = 3) {
     if ($Report['complete'] -isnot [bool] -or -not $Report['complete'] -or
         $Report['source_script'] -cne 'res://match/match.gd' -or $Report['main_scene'] -cne 'res://match/match.tscn' -or
         $Report['project_version'] -cne $ProjectVersion -or $Report['engine'] -cne '4.7.2-stable (official)' -or
@@ -233,7 +233,7 @@ function Assert-GodotPlayerControlReport([System.Collections.IDictionary]$Report
     if ($seen.Count -ne $policy.Count) { throw 'Player-control negative behavior coverage is incomplete.' }
     $focusReasons = @('pass', 'off_ball_switch')
     $requiredFocusCoverage = @('mode-0', 'mode-1', 'pass', 'off_ball_switch', 'pass-0-2', 'pass-2-0', 'all-off')
-    if ($ProjectVersion -ceq '0.4.0-preview') {
+    if ($ProjectVersion -cin @('0.4.0-preview', '0.5.0-preview')) {
         # §4.3 adds native HOME-taker selection; F11 must actually exercise it.
         $focusReasons += 'restart_taker'
         $requiredFocusCoverage += 'restart_taker'
@@ -272,7 +272,7 @@ function Assert-GodotPlayerControlReport([System.Collections.IDictionary]$Report
     foreach ($item in $requiredFocusCoverage) {
         if (-not $coverage.Contains($item)) { throw "Missing actual player-control behavior evidence: $item." }
     }
-    if ($ProjectVersion -ceq '0.4.0-preview') {
+    if ($ProjectVersion -cin @('0.4.0-preview', '0.5.0-preview')) {
         $motion = $Report['camera_handoff_motion']
         if ($motion -isnot [Collections.IDictionary]) {
             throw 'F12 requires the actual typed camera_handoff_motion observation.'
@@ -617,7 +617,7 @@ function Read-GodotBaseGameReport {
         [Parameter(Mandatory)][bool]$EditorBinary,
         [Parameter(Mandatory)][bool]$Headless,
         [Parameter(Mandatory)][string]$Executable,
-        [string]$ProjectVersion = '0.4.0-preview',
+        [string]$ProjectVersion = '0.5.0-preview',
         [int]$InputSchemaVersion = 3,
         [string]$CapturePath = '',
         [ValidateSet('Legacy', 'Gameplay')][string]$RuntimeProtocol = 'Legacy'
@@ -1038,7 +1038,7 @@ function Read-GodotGameReport {
         [Parameter(Mandatory)][bool]$EditorBinary,
         [Parameter(Mandatory)][bool]$Headless,
         [Parameter(Mandatory)][string]$Executable,
-        [string]$ProjectVersion = '0.4.0-preview',
+        [string]$ProjectVersion = '0.5.0-preview',
         [int]$InputSchemaVersion = 3,
         [string]$CapturePath = ''
     )

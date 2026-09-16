@@ -127,9 +127,9 @@ class CommonTests(unittest.TestCase):
 
     def test_version_and_tag_are_inferred_not_overridden(self) -> None:
         identity = project_identity(REPOSITORY / "game")
-        self.assertEqual(identity["tag"], "v0.4.0-preview")
+        self.assertEqual(identity["tag"], "v0.5.0-preview")
         self.assertEqual(identity["inputSchemaVersion"], 3)
-        for tag in ("0.4.0-preview", "v0.3.0-preview", "v9.0.0", "refs/tags/v0.4.0-preview"):
+        for tag in ("0.5.0-preview", "v0.4.0-preview", "v0.3.0-preview", "v9.0.0", "refs/tags/v0.5.0-preview"):
             with self.subTest(tag=tag), self.assertRaises(ReleaseError):
                 project_identity(REPOSITORY / "game", tag)
 
@@ -193,12 +193,13 @@ class CommonTests(unittest.TestCase):
         self.assertNotIn("gh release", text)
         self.assertIn("github.event.repository.private == false", text)
         self.assertEqual(text.count("persist-credentials: false"), 2)
+        self.assertEqual(text.count("lfs: true"), 2)
         triggers = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
         self.assertEqual(re.findall(r"(?m)^  ([a-z_]+):", triggers), ["workflow_dispatch"])
         self.assertIn("      version:\n", triggers)
         self.assertIn("        required: true\n", triggers)
         self.assertIn("        type: string\n", triggers)
-        self.assertIn("        default: v0.4.0-preview\n", triggers)
+        self.assertIn("        default: v0.5.0-preview\n", triggers)
         self.assertIn("FUTSAL_RELEASE_VERSION: ${{ inputs.version }}", text)
         self.assertIn("github.event_name == 'workflow_dispatch'", text)
         self.assertNotIn("refs/tags/", text)
@@ -209,6 +210,40 @@ class CommonTests(unittest.TestCase):
 
 
 class TemplateTests(unittest.TestCase):
+    def test_05_packages_copy_the_complete_current_project_notice_on_all_platforms(self) -> None:
+        identity = project_identity(REPOSITORY / "game")
+        data = (REPOSITORY / "THIRD_PARTY_NOTICES.md").read_bytes()
+        self.assertIn(b"Dan Ulrich", data)
+        self.assertIn(b"CC0", data)
+        for platform_id in PLATFORMS:
+            with self.subTest(platform=platform_id), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                payload = root / "payload"
+                payload.mkdir()
+                (root / "THIRD_PARTY_NOTICES.md").write_bytes(data)
+                engine_notice = root / "engine-notice.txt"
+                engine_notice.write_bytes(b"synthetic engine notice")
+                with mock.patch("tools.release.build.obtain", return_value=engine_notice):
+                    license_info, notice_info = _notices(
+                        root, payload, load_manifest(HERE / "manifest.json"), root / "cache",
+                        platform_id, identity=identity)
+                self.assertIsNone(license_info)
+                self.assertEqual((payload / "THIRD_PARTY_NOTICES.md").read_bytes(), data)
+                self.assertEqual(notice_info["sha256"], hashlib.sha256(data).hexdigest())
+                self.assertEqual(notice_info["bytes"], len(data))
+                self.assertIn("THIRD_PARTY_NOTICES.md", (payload / "README_ES.txt").read_text(encoding="utf-8"))
+
+    def test_missing_05_notice_fails_before_any_dependency_acquisition(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, mock.patch("tools.release.build.obtain") as obtain_mock:
+            root = Path(temporary)
+            payload = root / "payload"
+            payload.mkdir()
+            with self.assertRaisesRegex(ReleaseError, "THIRD_PARTY_NOTICES"):
+                _notices(root, payload, load_manifest(HERE / "manifest.json"), root / "cache",
+                         "windows-x86_64", identity=project_identity(REPOSITORY / "game"))
+            obtain_mock.assert_not_called()
+            self.assertEqual(list(payload.iterdir()), [])
+
     def _archive(self, root: Path) -> Path:
         path = root / "templates.tpz"
         manifest = load_manifest(HERE / "manifest.json")
@@ -389,8 +424,10 @@ class TemplateTests(unittest.TestCase):
             payload.mkdir()
             notice = root / "synthetic-notice.txt"
             notice.write_text("synthetic unit notice", encoding="utf-8")
+            (root / "THIRD_PARTY_NOTICES.md").write_bytes((REPOSITORY / "THIRD_PARTY_NOTICES.md").read_bytes())
             with mock.patch("tools.release.build.obtain", return_value=notice):
-                _notices(root, payload, load_manifest(HERE / "manifest.json"), root / "cache", "linux-x86_64")
+                _notices(root, payload, load_manifest(HERE / "manifest.json"), root / "cache", "linux-x86_64",
+                         identity=project_identity(REPOSITORY / "game"))
             readme = (payload / "README_ES.txt").read_text(encoding="utf-8")
             self.assertIn("plantilla DEBUG oficial de Godot 4.7.2", readme)
             self.assertIn("https://github.com/godotengine/godot/issues/87626", readme)
@@ -551,7 +588,7 @@ class BinaryTests(unittest.TestCase):
 
     def test_collection_requires_exactly_three_archives(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, self.assertRaises(ReleaseError):
-            verify_collection(REPOSITORY, Path(temporary), "a" * 40, "v0.4.0-preview")
+            verify_collection(REPOSITORY, Path(temporary), "a" * 40, "v0.5.0-preview")
 
 
 if __name__ == "__main__":

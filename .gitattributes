@@ -6,11 +6,15 @@
 .squad/rai/audit-trail.md merge=union
 
 # Godot source and portable asset exchange
+.gitattributes text eol=lf
 *.gd text eol=lf
 *.gdshader text eol=lf
 *.tscn text eol=lf
 *.tres text eol=lf
 *.godot text eol=lf
+*.import text eol=lf
+*.json text eol=lf
+*.png -text
 *.blend filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
 

@@ -72,13 +72,20 @@ func _ready() -> void:
 	if result != OK:
 		_report_error(result, "No se pudo iniciar el entrenamiento: " + _simulation.last_error)
 		return
-	if OS.get_cmdline_user_args().has("--smoke-test") or OS.get_cmdline_user_args().has("--gameplay-smoke"):
+	if OS.get_cmdline_user_args().has("--smoke-test") or OS.get_cmdline_user_args().has("--gameplay-smoke") \
+			or OS.get_cmdline_user_args().has("--athlete-capture"):
 		_run_smoke()
 
 
 func _run_smoke() -> void:
 	var smoke_path: String = "res://diagnostics/gameplay_smoke.gd" if OS.get_cmdline_user_args().has(
 		"--gameplay-smoke") else "res://diagnostics/match_smoke.gd"
+	if OS.get_cmdline_user_args().has("--athlete-capture"):
+		if OS.get_cmdline_user_args().has("--smoke-test") or OS.get_cmdline_user_args().has("--gameplay-smoke"):
+			_report_error(ERR_INVALID_PARAMETER, "No se pueden combinar captura de atletas y smoke de gameplay")
+			get_tree().quit(2)
+			return
+		smoke_path = "res://diagnostics/athlete_capture.gd"
 	var smoke_script: Script = load(smoke_path) as Script
 	if smoke_script == null or not smoke_script.can_instantiate():
 		_report_error(ERR_CANT_OPEN, "No se pudo cargar el diagnóstico de partido solicitado")
@@ -115,7 +122,9 @@ func start_match(setup: Setup = null) -> Error:
 	_setup = setup.copy() if setup != null else Setup.new()
 	_state = _simulation.get_snapshot()
 	_setup.ai_actor_ids = _state.ai_intent_actor_ids.duplicate()
-	_reconcile_athletes(true)
+	var asset_error: Error = _reconcile_athletes(true)
+	if asset_error != OK:
+		return asset_error
 	_finished_presented = false
 	_feedback_cooldown = 0.0
 	_last_restart_feedback = ""
@@ -283,12 +292,12 @@ func _mode_setup(mode: Setup.Mode) -> Setup:
 	return null
 
 
-func _reconcile_athletes(force: bool = false) -> void:
+func _reconcile_athletes(force: bool = false) -> Error:
 	var changed: bool = force or _athletes.size() != _state.actors.size()
 	for actor: Snapshot.ActorSnapshot in _state.actors:
 		changed = changed or not _athletes.has(actor.actor_id)
 	if not changed:
-		return
+		return OK
 	for athlete: Athlete in _athletes.values():
 		athlete.free()
 	_athletes.clear()
@@ -307,11 +316,17 @@ func _reconcile_athletes(force: bool = false) -> void:
 		var athlete: Athlete = Athlete.new()
 		athlete.name = "Athlete%d" % actor.actor_id
 		$Athletes.add_child(athlete)
-		athlete.configure(actor.actor_id, color, number)
+		var asset_error: Error = athlete.configure(actor.actor_id, color, number)
+		if asset_error != OK:
+			_report_error(asset_error, "No se pudo cargar el atleta %d: %s" % [actor.actor_id, error_string(asset_error)])
+			_exiting = true
+			get_tree().quit(1)
+			return asset_error
 		athlete.reset_pose()
 		_athletes[actor.actor_id] = athlete
 	_before = _state
 	_snap_camera = true
+	return OK
 
 
 func quit_match() -> void:
@@ -335,7 +350,8 @@ func _physics_process(_delta: float) -> void:
 		return
 	_before = _state
 	_state = _simulation.get_snapshot()
-	_reconcile_athletes()
+	if _reconcile_athletes() != OK:
+		return
 	_camera.sync_context(_state)
 	_sync_input(_state)
 	_drain_events()

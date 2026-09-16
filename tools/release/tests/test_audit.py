@@ -86,11 +86,12 @@ class CandidateFixture:
     """Paquetes sinteticos para probar el auditor, no pruebas de OS/ejecucion."""
 
     def __init__(self, root: Path, platform_id: str, manifest: dict, commit: str | None = None,
-                 snapshot: dict[str, str] | None = None) -> None:
+                 snapshot: dict[str, str] | None = None, *, identity: dict | None = None,
+                 notice_bytes: bytes | None = None) -> None:
         self.directory = root / platform_id
         self.directory.mkdir()
         self.platform_id = platform_id
-        self.identity = project_identity(REPOSITORY / "game")
+        self.identity = project_identity(REPOSITORY / "game") if identity is None else identity
         self.stem = f"futsal-{self.identity['tag']}-{platform_id}"
         self.archive = self.directory / (self.stem + ".zip")
         target = manifest["platforms"][platform_id]
@@ -125,6 +126,17 @@ class CandidateFixture:
         if target["buildType"] == "debug":
             self.embedded.update({key: target[key] for key in
                                   ("templateEntry", "templateSha256", "engineWorkaround")})
+        self.documents = None
+        if tuple(int(part) for part in self.identity["projectVersion"].split("-")[0].split(".")) >= (0, 5, 0):
+            data = (REPOSITORY / "THIRD_PARTY_NOTICES.md").read_bytes() if notice_bytes is None else notice_bytes
+            normalized = hashlib.sha256(data.decode("utf-8").replace("\r\n", "\n").encode("utf-8")).hexdigest()
+            self.documents = {"THIRD_PARTY_NOTICES.md": normalized}
+            self.files["THIRD_PARTY_NOTICES.md"] = data
+            self.embedded["thirdPartyNotices"] = {
+                "source": "THIRD_PARTY_NOTICES.md", "packaged": "THIRD_PARTY_NOTICES.md",
+                "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "normalizedSha256": normalized,
+            }
+            self.embedded["sourceDocumentsSha256"] = snapshot_digest(self.documents)
         self.files["BUILD.json"] = (json.dumps(self.embedded) + "\n").encode()
         with zipfile.ZipFile(self.archive, "w") as archive:
             for name, data in sorted(self.files.items()):
@@ -135,6 +147,8 @@ class CandidateFixture:
         self.proof = self.directory / "proof" / platform_id
         self.proof.mkdir(parents=True)
         write_json(self.proof / "source-snapshot.json", snapshot)
+        if self.documents is not None:
+            write_json(self.proof / "source-documents.json", self.documents)
         self._process("engine-version", ["editor", "--version"], manifest["engine"]["versionOutput"] + "\n")
         self._process("import", ["editor", "--headless", "--editor", "--import"], "")
         self._process("export-" + target["buildType"],
@@ -150,7 +164,7 @@ class CandidateFixture:
             directory.mkdir()
             editor = stage.startswith("source")
             protocol = "gameplay" if stage.endswith("gameplay") else "legacy"
-            fixture = SmokeFixture(directory, protocol, editor)
+            fixture = SmokeFixture(directory, protocol, editor, identity=self.identity)
             summary = fixture.validate()
             result = fixture.write()
             arguments = [str(fixture.executable), "--headless", "--audio-driver", "Dummy", "--fixed-fps", "60"]
@@ -217,12 +231,16 @@ class CandidateFixture:
         self.save()
 
     def replace_embedded_build(self, embedded: dict) -> None:
+        self.replace_packaged_file("BUILD.json", json.dumps(embedded).encode("utf-8"))
+
+    def replace_packaged_file(self, name: str, data: bytes | None) -> None:
         with zipfile.ZipFile(self.archive) as archive:
             entries = [(info, archive.read(info.filename)) for info in archive.infolist()]
         with zipfile.ZipFile(self.archive, "w") as archive:
-            for info, data in entries:
-                archive.writestr(info, json.dumps(embedded).encode("utf-8")
-                                 if info.filename == "BUILD.json" else data)
+            for info, original in entries:
+                if info.filename == name and data is None:
+                    continue
+                archive.writestr(info, data if info.filename == name else original)
         self.metadata["archiveSha256"] = digest(self.archive)
         self.metadata["archiveBytes"] = self.archive.stat().st_size
         self.metadata["contents"] = verify_zip(self.archive)
@@ -235,6 +253,100 @@ class AuditTests(unittest.TestCase):
     def setUp(self) -> None:
         self.manifest = candidate_manifest()
 
+    def test_05_audit_rejects_missing_or_altered_packaged_project_notice(self) -> None:
+        for data in (None, b"not the complete project notice"):
+            with self.subTest(data=data), tempfile.TemporaryDirectory() as temporary:
+                fixture = CandidateFixture(Path(temporary), "windows-x86_64", self.manifest)
+                fixture.replace_packaged_file("THIRD_PARTY_NOTICES.md", data)
+                with mock.patch("tools.release.build.load_manifest", return_value=self.manifest), \
+                        self.assertRaisesRegex(ReleaseError, "THIRD_PARTY_NOTICES"):
+                    audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_05_notice_metadata_is_typed_and_bound_in_both_documents(self) -> None:
+        changes = (
+            {"thirdPartyNotices": None},
+            {"sourceDocumentsSha256": True},
+            {"sourceDocumentsSha256": "0" * 64},
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "windows-x86_64", self.manifest)
+            original = copy.deepcopy(fixture.metadata)
+            for field, value in (("bytes", True), ("bytes", 0), ("sha256", 7),
+                                 ("normalizedSha256", False), ("source", "../THIRD_PARTY_NOTICES.md"),
+                                 ("packaged", "other-notices.md")):
+                notice = {**fixture.embedded["thirdPartyNotices"], field: value}
+                changes += ({"thirdPartyNotices": notice},)
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                for change in changes:
+                    for location in ("outer", "embedded", "both"):
+                        with self.subTest(change=change, location=location):
+                            fixture.metadata = copy.deepcopy(original)
+                            embedded = dict(fixture.embedded)
+                            if location != "embedded":
+                                fixture.metadata.update(change)
+                            if location != "outer":
+                                embedded.update(change)
+                            fixture.replace_embedded_build(embedded)
+                            with self.assertRaises(ReleaseError):
+                                audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_self_consistent_foreign_notice_is_not_the_local_source_notice(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "windows-x86_64", self.manifest,
+                                       notice_bytes=b"coherent but not the source notice\n")
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest), \
+                    self.assertRaisesRegex(ReleaseError, "avisos archivados no corresponden"):
+                audit_candidate(REPOSITORY, fixture.archive)
+
+    def test_three_equal_foreign_notice_snapshots_do_not_match_the_real_commit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkout = GitFixture(root / "repo")
+            snapshot = source_snapshot(checkout.root / "game")
+            for name in PLATFORMS:
+                CandidateFixture(root, name, self.manifest, checkout.commit, snapshot,
+                                 notice_bytes=b"three coherent foreign notices\n")
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest), \
+                    self.assertRaisesRegex(ReleaseError, "avisos archivados no corresponden"):
+                verify_collection(checkout.root, root, checkout.commit, "v0.5.0-preview")
+
+    def test_notice_line_endings_keep_source_identity_without_changing_packaged_bytes(self) -> None:
+        data = (REPOSITORY / "THIRD_PARTY_NOTICES.md").read_bytes().replace(b"\r\n", b"\n")
+        for current in (data, data.replace(b"\n", b"\r\n")):
+            with self.subTest(crlf=b"\r\n" in current), tempfile.TemporaryDirectory() as temporary:
+                fixture = CandidateFixture(Path(temporary), "windows-x86_64", self.manifest, notice_bytes=current)
+                with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                    result = audit_candidate(REPOSITORY, fixture.archive)
+                self.assertEqual(result["thirdPartyNotices"]["sha256"], hashlib.sha256(current).hexdigest())
+                self.assertEqual(result["thirdPartyNotices"]["normalizedSha256"], hashlib.sha256(data).hexdigest())
+
+    def test_historical_04_keeps_its_original_notice_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "game").mkdir()
+            settings = (REPOSITORY / "game" / "project.godot").read_text(encoding="utf-8")
+            (root / "game" / "project.godot").write_text(
+                settings.replace('config/version="0.5.0-preview"', 'config/version="0.4.0-preview"'), encoding="utf-8")
+            fixture = CandidateFixture(root, "windows-x86_64", self.manifest,
+                                       identity=project_identity(root / "game"))
+            with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
+                result = audit_candidate(root, fixture.archive)
+                self.assertNotIn("thirdPartyNotices", result)
+                fixture.metadata.update({"thirdPartyNotices": None, "sourceDocumentsSha256": None})
+                fixture.replace_embedded_build({**fixture.embedded, "thirdPartyNotices": None,
+                                                "sourceDocumentsSha256": None})
+                result = audit_candidate(root, fixture.archive)
+                self.assertIsNone(result["thirdPartyNotices"])
+                self.assertIsNone(result["sourceDocumentsSha256"])
+                for field, value in (("thirdPartyNotices", {"source": "invented.md"}),
+                                     ("sourceDocumentsSha256", "0" * 64)):
+                    with self.subTest(field=field):
+                        fixture.metadata[field] = value
+                        fixture.save()
+                        with self.assertRaisesRegex(ReleaseError, "historica"):
+                            audit_candidate(root, fixture.archive)
+                        fixture.metadata.pop(field)
+
     def test_exact_three_candidates_with_raw_native_proofs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -244,7 +356,7 @@ class AuditTests(unittest.TestCase):
             for name in PLATFORMS:
                 fixtures[name] = CandidateFixture(root, name, self.manifest, checkout.commit, snapshot)
             with mock.patch("tools.release.build.load_manifest", return_value=self.manifest):
-                result = verify_collection(checkout.root, root, checkout.commit, "v0.4.0-preview")
+                result = verify_collection(checkout.root, root, checkout.commit, "v0.5.0-preview")
                 self.assertTrue(result["ok"])
                 self.assertEqual(len(result["archives"]), 3)
                 self.assertEqual({item["platform"]: item["buildType"] for item in result["archives"]},
@@ -258,6 +370,9 @@ class AuditTests(unittest.TestCase):
                     self.assertEqual(entry["templateEntry"], validated.get("templateEntry"))
                     self.assertEqual(entry["templateSha256"], validated.get("templateSha256"))
                     self.assertEqual(entry["sha256"], validated["archiveSha256"])
+                    self.assertEqual(entry["thirdPartyNotices"], validated["thirdPartyNotices"])
+                    self.assertEqual(entry["sourceDocumentsSha256"], validated["sourceDocumentsSha256"])
+                    self.assertEqual(result["sourceDocumentsSha256"], validated["sourceDocumentsSha256"])
                     if entry["platform"] == "linux-x86_64":
                         self.assertEqual(entry["templateEntry"], "templates/linux_debug.x86_64")
                         self.assertEqual(entry["templateSha256"],
@@ -270,7 +385,7 @@ class AuditTests(unittest.TestCase):
                     nulls = {"templateEntry": None, "templateSha256": None, "engineWorkaround": None}
                     fixture.metadata.update(nulls)
                     fixture.replace_embedded_build({**fixture.embedded, **nulls})
-                result = verify_collection(checkout.root, root, checkout.commit, "v0.4.0-preview")
+                result = verify_collection(checkout.root, root, checkout.commit, "v0.5.0-preview")
                 for entry in result["archives"]:
                     if entry["platform"] != "linux-x86_64":
                         for field in ("templateEntry", "templateSha256", "engineWorkaround"):
@@ -472,7 +587,7 @@ class AuditTests(unittest.TestCase):
                 CandidateFixture(root, name, self.manifest, checkout.commit, snapshot)
             with mock.patch("tools.release.build.load_manifest", return_value=self.manifest), \
                     self.assertRaisesRegex(ReleaseError, "fuente archivada no corresponde"):
-                verify_collection(checkout.root, root, checkout.commit, "v0.4.0-preview")
+                verify_collection(checkout.root, root, checkout.commit, "v0.5.0-preview")
 
     def test_full_candidate_rejects_parse_error_with_updated_proof_and_unchanged_zip(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

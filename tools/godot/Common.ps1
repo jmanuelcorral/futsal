@@ -197,13 +197,18 @@ function Test-GodotReportedProcess($Result, $ProcessId) {
         (Test-GodotProcessCompletion $Result) -and $ProcessId -in $Result.RuntimeProcessIds)
 }
 
+function Get-GodotExpectedProjectIdentity {
+    return [pscustomobject]@{ projectVersion = '0.5.0-preview'; inputSchemaVersion = 3 }
+}
+
 function Assert-GodotProjectConfiguration {
     param([Parameter(Mandatory)][string]$Settings)
+    $identity = Get-GodotExpectedProjectIdentity
     $required = [ordered]@{
         'config/name' = '"Futsal — Laboratorio 5v5"'
-        'config/version' = '"0.4.0-preview"'
+        'config/version' = '"' + $identity.projectVersion + '"'
         'run/main_scene' = '"res://match/match.tscn"'
-        'preparation/input_schema_version' = '3'
+        'preparation/input_schema_version' = [string]$identity.inputSchemaVersion
     }
     foreach ($key in $required.Keys) {
         $pattern = '(?m)^' + [regex]::Escape($key + '=' + $required[$key]) + '\r?$'

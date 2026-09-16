@@ -37,7 +37,7 @@ function Fixture-Output($Report) {
     return [pscustomobject]@{Stdout = 'FUTSAL_FIXTURE_TESTS ' + ($Report | ConvertTo-Json -Compress -Depth 32)}
 }
 
-function Assert-CurrentGameplayMetadata($Metadata) {
+function Assert-HistoricalGameplay04Metadata($Metadata) {
     $godot = $Metadata['godot']
     $preview = $godot['previewValidation']
     $history = @($godot['g1Validation'], $godot['previousPreviewValidation'], $godot['playerControlValidation'])
@@ -85,8 +85,8 @@ function New-FixturePng([string]$Path, [int]$Index, [bool]$Uniform = $false, [in
 
 try {
     $contract = Get-GodotGameplayContract
-    Check 'new gameplay tooling uses exact 0.4 schema 3' (
-        $contract['projectVersion'] -ceq '0.4.0-preview' -and $contract['inputSchemaVersion'] -eq 3)
+    Check 'current source tooling uses exact 0.5 schema 3 without rewriting 0.4 evidence' (
+        $contract['projectVersion'] -ceq '0.5.0-preview' -and $contract['inputSchemaVersion'] -eq 3)
     Assert-GodotGameplayContractBinding $root $contract
     Check 'all canonical overrides and G01-G32 definitions are bound to the published section' $true
     $planText = [IO.File]::ReadAllText((Join-Path $root $contract['repositoryPlan']))
@@ -459,10 +459,11 @@ try {
         $dribble[0]['contextualActions']['RESTART_AIM_WITH_SPOT_CHOICE'] -ceq 'CHOOSE_RESTART_SPOT' -and
         $input['restartFineKeyboardAim'] -ceq $contract['fineAimHint'] -and $input['restartFineAimMaxDegreesPerSecond'] -eq 30.0)
     $metadata = Get-Content -LiteralPath (Join-Path $root 'config\toolchain.json') -Raw | ConvertFrom-Json -AsHashtable -Depth 32
-    Assert-CurrentGameplayMetadata $metadata
-    Check 'new metadata cannot inherit old runtime or GPU acceptance' $true
+    Assert-HistoricalGameplay04Metadata $metadata
+    Check 'historical 0.4 metadata remains bound to its own runtime and GPU evidence, not source 0.5' $true
     foreach ($change in @(
-            @{projectVersion = '0.3.0-preview'}, @{inputSchemaVersion = 2}, @{inputSchemaVersion = '3'},
+            @{projectVersion = '0.3.0-preview'}, @{projectVersion = '0.5.0-preview'},
+            @{inputSchemaVersion = 2}, @{inputSchemaVersion = '3'},
             @{currentlyExportedVersion = '0.3.0-preview'},
             @{runtimeValidated = $false}, @{runtimeValidated = 'true'}, @{gpuValidated = $false}, @{gpuValidated = 'true'},
             @{artifactPending = $true}, @{artifactPending = 'false'}, @{humanFeelAccepted = $true},
@@ -476,7 +477,7 @@ try {
         $mutant = Copy-Fixture $metadata
         foreach ($key in $change.Keys) { $mutant['godot']['previewValidation'][$key] = $change[$key] }
         Rejected ('current metadata rejects stale or conflated evidence: ' + ($change | ConvertTo-Json -Compress)) {
-            Assert-CurrentGameplayMetadata $mutant
+            Assert-HistoricalGameplay04Metadata $mutant
         }
     }
     foreach ($field in @('godot.projectVersion', 'previewValidation.projectVersion', 'currentlyExportedVersion')) {
@@ -491,7 +492,7 @@ try {
                 'currentlyExportedVersion' { $mutant['godot']['previewValidation']['currentlyExportedVersion'] = $case.value }
             }
             Rejected "version metadata $field rejects $($case.name) without coercion" {
-                Assert-CurrentGameplayMetadata $mutant
+                Assert-HistoricalGameplay04Metadata $mutant
             }
         }
     }
@@ -503,7 +504,7 @@ try {
     $bootstrap = Get-Content -LiteralPath (Join-Path $root 'game\bootstrap\bootstrap.gd') -Raw
     Check 'diagnostic source declares schema 3 and both native dribble bindings' (
         $bootstrap.Contains('const INPUT_SCHEMA_VERSION: int = 3') -and
-        $bootstrap.Contains('const EXPECTED_PROJECT_VERSION: String = "0.4.0-preview"') -and
+        $bootstrap.Contains('const EXPECTED_PROJECT_VERSION: String = "0.5.0-preview"') -and
         $bootstrap.Contains('&"dribble"') -and $bootstrap.Contains('KEY_L') -and $bootstrap.Contains('JOY_BUTTON_X'))
     foreach ($name in @('GameplayValidation.ps1', 'Test-MicroSlice.ps1', 'tests\Test-GameplayValidation.ps1')) {
         $errors = $null

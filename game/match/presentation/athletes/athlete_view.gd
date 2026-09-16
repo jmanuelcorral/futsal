@@ -1,21 +1,20 @@
 extends Node3D
-## Silueta adulta y gestos provisionales; no rig/animación artística aprobados.
+## Atleta con skinning; los gestos siguen los contactos y ticks de la autoridad.
 ## Pies en el origen y frente local -Z, según el contrato de MatchSnapshot.
 
 const Geometry = preload("res://match/presentation/geometry.gd")
+const SkinnedAthlete = preload("res://match/presentation/athletes/skinned_athlete.gd")
+const AthleteModel = preload("res://assets/athletes/court_athlete/court_athlete.glb")
 const Snapshot = preload("res://match/simulation/match_snapshot.gd")
 const Event = preload("res://match/simulation/match_event.gd")
 const RuleTypes = preload("res://match/simulation/match_rule_types.gd")
 const Tuning = preload("res://match/simulation/match_tuning.gd")
-const LEG_SEGMENT_LENGTH: float = 0.415
-const MAX_LEG_REACH: float = 0.824
-const ARM_SEGMENT_LENGTH: float = 0.285
-const MAX_ARM_REACH: float = 0.566
-const ANKLE_HEIGHT: float = 0.08
-const SHOE_SIZE: Vector3 = Vector3(0.13, 0.10, 0.28)
-const SOLE_SIZE: Vector3 = Vector3(0.134, 0.035, 0.282)
-const SHOE_OFFSET: Vector3 = Vector3(0, -0.024, -0.055)
-const SOLE_OFFSET: Vector3 = Vector3(0, -0.063, -0.055)
+const LIMB_EXTENSION_MARGIN: float = 0.002
+const ANKLE_HEIGHT: float = 0.107955
+const SHOE_SIZE: Vector3 = Vector3(0.1196, 0.1415, 0.2685)
+const SOLE_SIZE: Vector3 = Vector3(0.1196, 0.029465, 0.265)
+const SHOE_OFFSET: Vector3 = Vector3(0, -0.0372, -0.0653)
+const SOLE_OFFSET: Vector3 = Vector3(0, -0.093223, -0.065158)
 const SHOE_TOE_REACH: float = SHOE_SIZE.z * 0.5 - SHOE_OFFSET.z
 const CANCEL_BLEND_TICKS: float = 3.0
 const PRESENTATION_ERROR: String = "AthleteView rejected invalid presentation data: "
@@ -25,6 +24,7 @@ var kit_color: Color = Color("#172f4d")
 var dorsal: int = 7
 
 var _body: Node3D
+var _skin_view: SkinnedAthlete
 var _marker: MeshInstance3D
 var _selection_marker: Label3D
 var _legs: Array[Array] = []
@@ -65,13 +65,16 @@ var _last_validation_error: String = ""
 var _posed_ankles: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 
 
-func configure(id: int, color: Color, number: int) -> void:
+func configure(id: int, color: Color, number: int) -> Error:
 	actor_id = id
 	kit_color = color
 	dorsal = number
 	_keeper = id in [2, 3]
-	_build()
+	var error: Error = _build()
+	if error != OK:
+		return error
 	reset_pose()
+	return OK
 
 
 ## El ActorSnapshot no contiene su tick ni el balón. El host copia este contexto
@@ -175,7 +178,8 @@ func present(before: Snapshot.ActorSnapshot, actor: Snapshot.ActorSnapshot,
 			var swing: float = (phase - 0.42) / 0.58
 			travel = lerpf(-0.5, 0.5, smoothstep(0.0, 1.0, swing))
 			lift = sin(swing * PI) * (0.08 + speed * 0.025) * motion
-		var ankle: Vector3 = Vector3(side * 0.115, ANKLE_HEIGHT - _body.position.y + lift, 0.0)
+		var foot_rest: Vector3 = _skin_view.rig.joint_position(side_index, "Foot")
+		var ankle: Vector3 = Vector3(foot_rest.x, ANKLE_HEIGHT - _body.position.y + lift, foot_rest.z)
 		ankle += movement * stride * travel
 		if side_index == 1 and charge > 0.0 and speed < 2.0 \
 				and actor.ball_contact_reachable and _gesture_weight == 0.0:
@@ -199,18 +203,20 @@ func present(before: Snapshot.ActorSnapshot, actor: Snapshot.ActorSnapshot,
 			var target_basis: Basis = body_inverse * Basis.looking_at(foot_forward, Vector3.UP)
 			foot_basis = Basis(base_foot_basis.get_rotation_quaternion().slerp(
 				target_basis.get_rotation_quaternion(), leg_weight))
-		_pose_leg(side_index, Vector3(side * 0.10, 0.89, 0.0), ankle, foot_basis)
+		_pose_leg(side_index, _skin_view.rig.joint_position(side_index, "Thigh"), ankle, foot_basis)
 		var arm_swing: float = sin((_gait + float(side_index) * 0.5) * TAU) * motion
-		var shoulder: Vector3 = Vector3(side * 0.215, 1.40, 0.0)
-		var arm_range: float = lerpf(0.16, 0.28, sprint_blend)
-		var hand_depth: float = lerpf(0.19, 0.34, sprint_blend)
-		var elbow: Vector3 = Vector3(side * (0.28 + charge * 0.07), 1.16, arm_swing * arm_range)
-		var hand: Vector3 = Vector3(side * (0.30 + charge * 0.11), lerpf(0.98, 0.90, sprint_blend), -0.06 - arm_swing * hand_depth)
+		var shoulder: Vector3 = _skin_view.rig.joint_position(side_index, "UpperArm")
+		var hand_depth: float = lerpf(0.19, 0.29, sprint_blend)
+		var hand: Vector3 = Vector3(shoulder.x + side * (0.035 + charge * 0.07),
+			lerpf(0.875, 1.10, sprint_blend) + arm_swing * sprint_blend * 0.10,
+			-0.06 - arm_swing * hand_depth)
 		if _keeper:
-			elbow = Vector3(side * 0.32, 1.17, -0.06)
 			hand = Vector3(side * 0.30, 1.04, -0.27)
 			if _save_remaining > 0.0:
 				hand += Vector3(side * 0.11, 0.13, -0.10) * (_save_remaining / 0.25)
+		var resting_arm: Array[Vector3] = _arm_ik(shoulder, hand, side)
+		var elbow: Vector3 = resting_arm[0]
+		hand = resting_arm[1]
 		if holding:
 			hand = _body.to_local(_grip_world(held_anchor, side))
 			var grip: Array[Vector3] = _arm_ik(shoulder, hand, side)
@@ -238,8 +244,10 @@ func present(before: Snapshot.ActorSnapshot, actor: Snapshot.ActorSnapshot,
 				elif _gesture_kind == RuleTypes.GestureKind.PACE_CHANGE:
 					target_hand.z = 0.22 if side_index == _contact_leg else -0.32
 			var gesture_arm: Array[Vector3] = _arm_ik(shoulder, target_hand, side)
-			elbow = elbow.lerp(gesture_arm[0], _gesture_weight)
 			hand = hand.lerp(gesture_arm[1], _gesture_weight)
+			var blended_arm: Array[Vector3] = _arm_ik(shoulder, hand, side)
+			elbow = blended_arm[0]
+			hand = blended_arm[1]
 		_pose_arm(side_index, shoulder, elbow, hand)
 
 
@@ -319,11 +327,15 @@ func reset_pose() -> void:
 		return
 	_body.position = Vector3.ZERO
 	_body.rotation = Vector3.ZERO
+	_skin_view.rig.reset_pose()
 	for index: int in 2:
 		var side: float = -1.0 if index == 0 else 1.0
-		_pose_leg(index, Vector3(side * 0.10, 0.89, 0), Vector3(side * 0.115, ANKLE_HEIGHT, 0))
-		_pose_arm(index, Vector3(side * 0.215, 1.40, 0),
-			Vector3(side * 0.28, 1.16, 0), Vector3(side * 0.30, 0.98, -0.06))
+		var foot: Vector3 = _skin_view.rig.joint_position(index, "Foot")
+		foot.y = ANKLE_HEIGHT
+		_pose_leg(index, _skin_view.rig.joint_position(index, "Thigh"), foot)
+		var shoulder: Vector3 = _skin_view.rig.joint_position(index, "UpperArm")
+		var arm: Array[Vector3] = _arm_ik(shoulder, Vector3(shoulder.x + side * 0.035, 0.875, -0.06), side)
+		_pose_arm(index, shoulder, arm[0], arm[1])
 	_marker.scale = Vector3.ONE
 	(_marker.material_override as StandardMaterial3D).albedo_color = Color("#314350")
 	if _selection_marker != null:
@@ -492,22 +504,28 @@ func _gesture_ankle_world() -> Vector3:
 
 
 func _grip_world(anchor: Vector3, side: float) -> Vector3:
-	return anchor + global_basis.x.normalized() * side * (Tuning.BALL_RADIUS + 0.025)
+	return anchor + global_basis.x.normalized() * side * Tuning.BALL_RADIUS
 
 
 func _arm_ik(shoulder: Vector3, target: Vector3, side: float) -> Array[Vector3]:
-	var axis: Vector3 = (target - shoulder).limit_length(MAX_ARM_REACH)
-	var hand: Vector3 = shoulder + axis
-	var direction: Vector3 = axis.normalized()
-	var pole: Vector3 = Vector3(side, 0.05, 0.25)
+	var lengths: Vector2 = _skin_view.rig.arm_lengths[0 if side < 0.0 else 1]
+	return _solve_limb(shoulder, target, lengths, Vector3(side * 0.15, -0.7, 0.45))
+
+
+func _solve_limb(origin: Vector3, target: Vector3, lengths: Vector2, pole: Vector3) -> Array[Vector3]:
+	var axis: Vector3 = target - origin
+	var direction: Vector3 = axis.normalized() if axis.length_squared() > 0.000001 else Vector3.DOWN
+	var distance: float = clampf(axis.length(), absf(lengths.x - lengths.y) + 0.0001,
+		lengths.x + lengths.y - LIMB_EXTENSION_MARGIN)
+	target = origin + direction * distance
 	pole -= direction * pole.dot(direction)
 	if pole.length_squared() < 0.001:
 		pole = Vector3.FORWARD - direction * direction.dot(Vector3.FORWARD)
 	if pole.length_squared() < 0.001:
-		pole = Vector3.RIGHT
-	var bend: float = sqrt(maxf(0.0001,
-		ARM_SEGMENT_LENGTH * ARM_SEGMENT_LENGTH - axis.length_squared() * 0.25))
-	return [shoulder + axis * 0.5 + pole.normalized() * bend, hand]
+		pole = Vector3.RIGHT - direction * direction.dot(Vector3.RIGHT)
+	var along: float = (lengths.x * lengths.x - lengths.y * lengths.y + distance * distance) / (2.0 * distance)
+	var bend: float = sqrt(maxf(0.0, lengths.x * lengths.x - along * along))
+	return [origin + direction * along + pole.normalized() * bend, target]
 
 
 func _pose_arm(index: int, shoulder: Vector3, elbow: Vector3, hand: Vector3) -> void:
@@ -515,65 +533,33 @@ func _pose_arm(index: int, shoulder: Vector3, elbow: Vector3, hand: Vector3) -> 
 	_set_bone(_arms[index][1] as Node3D, elbow, hand)
 	_set_bone(_arms[index][3] as Node3D, shoulder, shoulder.lerp(elbow, 0.55))
 	(_arms[index][2] as Node3D).position = hand
+	_skin_view.rig.pose_arm(index, shoulder, elbow, hand)
 
 
-func _build() -> void:
+func _build() -> Error:
 	_body = Node3D.new()
 	_body.name = "ArticulatedBody"
 	add_child(_body)
-	var shirt: StandardMaterial3D = Geometry.material(kit_color, 0.88)
+	_skin_view = SkinnedAthlete.new()
+	_skin_view.name = "SkinnedModel"
+	_body.add_child(_skin_view)
+	var skin_error: Error = _skin_view.configure(AthleteModel, actor_id, kit_color)
+	if skin_error != OK:
+		return skin_error
 	var ink_color: Color = Color("#eee8d8") if actor_id % 2 == 0 else Color("#172f4d")
-	var contrast: StandardMaterial3D = Geometry.material(ink_color, 0.84)
-	var shorts: StandardMaterial3D = Geometry.material(Color("#192e43") if actor_id % 2 == 0 else Color("#dbd5c8"), 0.9)
-	var skin_colors: Array[Color] = [Color("#ad7957"), Color("#c69a79"), Color("#80573e"), Color("#ba8b66")]
-	var skin: StandardMaterial3D = Geometry.material(skin_colors[actor_id % skin_colors.size()], 0.67)
-	var hair: StandardMaterial3D = Geometry.material(Color("#292722"), 0.95)
-	var shoe: StandardMaterial3D = Geometry.material(Color("#30363a"), 0.77)
-	var rubber: StandardMaterial3D = Geometry.material(Color("#b5a387"), 0.92)
-	var torso: Array[Vector3] = [
-		Vector3(0.965, 0.15, 0.09), Vector3(1.00, 0.18, 0.108),
-		Vector3(1.14, 0.172, 0.105), Vector3(1.30, 0.215, 0.12),
-		Vector3(1.41, 0.225, 0.108), Vector3(1.46, 0.17, 0.092),
-		Vector3(1.47, 0.060, 0.054),
-	]
-	Geometry.mesh_node(_body, "Jersey", Geometry.profile(torso), shirt)
-	var collar: Array[Vector3] = [Vector3(1.466, 0.075, 0.061), Vector3(1.482, 0.073, 0.060)]
-	Geometry.mesh_node(_body, "Collar", Geometry.profile(collar), contrast)
-	if actor_id == 1:
-		var stripe: Array[Vector3] = [Vector3(1.205, 0.193, 0.115), Vector3(1.265, 0.210, 0.122)]
-		Geometry.mesh_node(_body, "AwayChestBand", Geometry.profile(stripe), contrast)
-	# Definición de hombros: deltoides para silueta atlética más amplia y legible
-	Geometry.ellipsoid(_body, "LeftDeltoid",  Vector3(0.098, 0.090, 0.088), Vector3(-0.297, 1.375, 0.0), shirt)
-	Geometry.ellipsoid(_body, "RightDeltoid", Vector3(0.098, 0.090, 0.088), Vector3( 0.297, 1.375, 0.0), shirt)
-	Geometry.ellipsoid(_body, "Neck", Vector3(0.105, 0.13, 0.10), Vector3(0, 1.505, 0), skin)
-	Geometry.ellipsoid(_body, "Head", Vector3(0.188, 0.25, 0.197), Vector3(0, 1.635, -0.005), skin)
-	Geometry.ellipsoid(_body, "Hair", Vector3(0.191, 0.088, 0.194), Vector3(0, 1.735, 0.002), hair)
-	Geometry.ellipsoid(_body, "Nose", Vector3(0.033, 0.044, 0.042), Vector3(0, 1.633, -0.105), skin)
-	# Definición facial: mandíbula y orejas para mayor lectura de silueta de cabeza
-	Geometry.ellipsoid(_body, "Jaw",      Vector3(0.142, 0.105, 0.138), Vector3(0,      1.558, -0.010), skin)
-	Geometry.ellipsoid(_body, "LeftEar",  Vector3(0.038, 0.052, 0.022), Vector3(-0.182, 1.638,  0.018), skin)
-	Geometry.ellipsoid(_body, "RightEar", Vector3(0.038, 0.052, 0.022), Vector3( 0.182, 1.638,  0.018), skin)
-	_add_number("BackNumber", str(dorsal), Vector3(0, 1.27, 0.123), 0.0, ink_color, 0.0038)
-	_add_number("FrontNumber", str(dorsal), Vector3(0.095, 1.34, -0.115), PI, ink_color, 0.0016)
+	_add_number("BackNumber", str(dorsal), Vector3(0, 1.205, 0.121), 0.0, ink_color, 0.0027)
+	_add_number("FrontNumber", str(dorsal), Vector3(0.075, 1.29, -0.157), PI, ink_color, 0.0011)
 	if _keeper:
 		_add_number("KeeperRole", "P", Vector3(0, 1.075, 0.119), 0.0, ink_color, 0.0018)
 	for side: int in 2:
 		var leg: Array = [
-			_limb("Thigh", 0.085, 0.067, skin),
-			_limb("Shin", 0.065, 0.038, skin),
-			_limb("Sock", 0.059, 0.043, contrast),
-			Geometry.ellipsoid(_body, "CourtShoe", SHOE_SIZE, Vector3.ZERO, shoe),
-			_limb("Shorts", 0.112, 0.103, shorts),
-			Geometry.ellipsoid(_body, "Sole", SOLE_SIZE, Vector3.ZERO, rubber),
-			Geometry.ellipsoid(_body, "KneeGuard", Vector3(0.062, 0.068, 0.052), Vector3.ZERO, shorts),
+			_joint("Thigh"), _joint("Shin"), _joint("Sock"), _joint("CourtShoe"),
+			_joint("Shorts"), _joint("Sole"), _joint("KneeGuard"),
 		]
 		_legs.append(leg)
 		var arm: Array = [
-			_limb("UpperArm", 0.055, 0.043, skin),
-			_limb("Forearm", 0.047, 0.030, skin),
-			Geometry.ellipsoid(_body, "Glove" if _keeper else "Hand",
-				Vector3(0.085, 0.12, 0.068), Vector3.ZERO, contrast if _keeper else skin),
-			_limb("Sleeve", 0.076, 0.070, shirt),
+			_joint("UpperArm"), _joint("Forearm"),
+			_joint("Glove" if _keeper else "Hand"), _joint("Sleeve"),
 		]
 		_arms.append(arm)
 	var shape: PackedVector3Array
@@ -602,31 +588,20 @@ func _build() -> void:
 		selected.outline_size = 4
 		add_child(selected)
 		_selection_marker = selected
+	return OK
 
 
-func _limb(node_name: String, start_radius: float, end_radius: float,
-		surface: Material) -> MeshInstance3D:
-	var rings: Array[Vector3] = [
-		Vector3(0, start_radius * 0.8, start_radius * 0.8),
-		Vector3(0.1, start_radius, start_radius),
-		Vector3(0.55, lerpf(start_radius, end_radius, 0.35), lerpf(start_radius, end_radius, 0.35)),
-		Vector3(0.95, end_radius, end_radius), Vector3(1.0, end_radius * 0.8, end_radius * 0.8),
-	]
-	return Geometry.mesh_node(_body, node_name, Geometry.profile(rings, 12), surface)
+func _joint(node_name: String) -> Node3D:
+	var joint: Node3D = Node3D.new()
+	joint.name = node_name
+	_body.add_child(joint)
+	return joint
 
 
 func _pose_leg(index: int, hip: Vector3, ankle: Vector3, foot_basis: Basis = Basis.IDENTITY) -> void:
-	# Limitar sólo la rodilla dejaba la espinilla estirada hasta un tobillo inalcanzable.
-	var axis: Vector3 = (ankle - hip).limit_length(MAX_LEG_REACH)
-	ankle = hip + axis
-	var distance: float = axis.length()
-	var direction: Vector3 = axis.normalized()
-	var pole: Vector3 = Vector3.FORWARD - direction * direction.dot(Vector3.FORWARD)
-	if pole.length_squared() < 0.01:
-		pole = Vector3.RIGHT
-	var bend: float = sqrt(maxf(0.001,
-		LEG_SEGMENT_LENGTH * LEG_SEGMENT_LENGTH - distance * distance * 0.25))
-	var knee: Vector3 = hip + direction * distance * 0.5 + pole.normalized() * bend
+	var solution: Array[Vector3] = _solve_limb(hip, ankle, _skin_view.rig.leg_lengths[index], Vector3.FORWARD)
+	var knee: Vector3 = solution[0]
+	ankle = solution[1]
 	var leg: Array = _legs[index]
 	_set_bone(leg[0] as Node3D, hip, knee)
 	_set_bone(leg[1] as Node3D, knee, ankle)
@@ -639,6 +614,7 @@ func _pose_leg(index: int, hip: Vector3, ankle: Vector3, foot_basis: Basis = Bas
 	_posed_ankles[index] = ankle
 	if leg.size() > 6:
 		(leg[6] as Node3D).position = knee + Vector3(0, 0.028, -0.025)
+	_skin_view.rig.pose_leg(index, hip, knee, ankle, foot_basis)
 
 
 func _set_bone(node: Node3D, from: Vector3, to: Vector3) -> void:

@@ -17,6 +17,7 @@ $local = Get-GodotInstallation
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $project = Join-Path $root 'game'
 $metadata = (Get-Content -LiteralPath (Join-Path $root 'config\toolchain.json') -Raw | ConvertFrom-Json).godot
+$sourceIdentity = Get-GodotExpectedProjectIdentity
 $runtime = Join-Path $PSScriptRoot 'runtime'
 $runPath = Join-Path $runtime ('preview-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '-' + [guid]::NewGuid().ToString('N'))
 $buildPath = Join-Path $root 'build\windows'
@@ -143,7 +144,7 @@ function Invoke-Game([string]$Name, [bool]$Headless, [bool]$Exported) {
         -Directory $directory -Rendered (-not $Headless) -ExpectedChild $child
     $report = Read-GodotGameReport -Result $result -ReportPath $reportPath -StartedAt $stageStart `
         -EditorBinary (-not $Exported) -Headless $Headless -Executable $nativeExecutable `
-        -ProjectVersion $metadata.projectVersion -InputSchemaVersion $metadata.inputSchemaVersion -CapturePath $capturePath
+        -ProjectVersion $sourceIdentity.projectVersion -InputSchemaVersion $sourceIdentity.inputSchemaVersion -CapturePath $capturePath
     $reports[$Name] = [ordered]@{ path = $reportPath; passed = $report['passed']; total = $report['total'] }
     Add-Check "$Name actual main, current-run identity, inputs and HUD validated" $true
     Write-Host "$Name : $($report['passed'])/$($report['total']) ($($stages[$Name].wallSeconds)s wall)"
@@ -223,6 +224,8 @@ try {
         }
         $visualCandidates = [ordered]@{
             'visual-native' = 'game\tests\test_match_visuals.gd'
+            'athlete-rig' = 'game\tests\test_athlete_rig.gd'
+            'athlete-skinning' = 'game\tests\test_athlete_skinning.gd'
             'visual-motion' = 'tools\godot\tests\test_visual_motion.gd'
         }
         if (-not (Test-Path -LiteralPath (Join-Path $root 'game\tests\test_match_visuals.gd') -PathType Leaf)) {
@@ -232,6 +235,9 @@ try {
             $path = $visualCandidates[$name]
             if (Test-Path -LiteralPath (Join-Path $root $path) -PathType Leaf) {
                 $visualTests[$name] = Join-Path $root $path
+            }
+            elseif ($Scope -eq 'All' -and $name -cin @('athlete-rig', 'athlete-skinning')) {
+                $pendingDependencies.Add($path + ' (skinned athlete regression remains mandatory)')
             }
         }
         if ($Scope -eq 'All' -and $visualTests.Count -eq 0) {
@@ -263,8 +269,8 @@ try {
                 '. No gameplay, GPU or export stage ran. -Scope Helpers remains independent; no silent test skip or diagnostic fallback.')
         }
         Assert-GodotProjectConfiguration $settings
-        if ($metadata.projectVersion -ne '0.4.0-preview' -or $metadata.inputSchemaVersion -ne 3) {
-            throw 'Gameplay preview requires toolchain version 0.4.0-preview and input schema 3.'
+        if ($sourceIdentity.projectVersion -cne '0.5.0-preview' -or $sourceIdentity.inputSchemaVersion -ne 3) {
+            throw 'Gameplay preview requires source version 0.5.0-preview and input schema 3; historical metadata is not current validation.'
         }
         $mainSource = Get-Content -LiteralPath (Join-Path $project 'match\match.gd') -Raw
         if (-not $mainSource.Contains('--smoke-test') -or -not $mainSource.Contains('res://diagnostics/match_smoke.gd')) {
@@ -494,8 +500,8 @@ finally {
             completedAt = [DateTime]::UtcNow.ToString('o')
             wallSeconds = [Math]::Round($watch.Elapsed.TotalSeconds, 3)
             godotVersion = $local.versionOutput
-            projectVersion = $metadata.projectVersion
-            inputSchemaVersion = $metadata.inputSchemaVersion
+            projectVersion = $sourceIdentity.projectVersion
+            inputSchemaVersion = $sourceIdentity.inputSchemaVersion
             runPath = $runPath
             gpuIndexOverride = $GpuIndex
             allowKnownVulkanLayerWarning = [bool]$AllowKnownVulkanLayerWarning

@@ -14,6 +14,7 @@ $local = Get-GodotInstallation
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $project = Join-Path $root 'game'
 $metadata = (Get-Content -LiteralPath (Join-Path $root 'config\toolchain.json') -Raw | ConvertFrom-Json).godot
+$sourceIdentity = Get-GodotExpectedProjectIdentity
 $runtime = Join-Path $PSScriptRoot 'runtime'
 $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '-' + [guid]::NewGuid().ToString('N')
 $runPath = Join-Path $runtime $runId
@@ -61,7 +62,7 @@ function Read-Report([string]$Stage, [string]$Path, [Parameter(Mandatory)]$Proce
     $report = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
     if ($report.PSObject.Properties.Name -contains 'input_schema_version') {
         Add-Check "$Stage exact player-control version and diagnostic input schema" (
-            $report.project_version -ceq '0.4.0-preview' -and
+            $report.project_version -ceq $sourceIdentity.projectVersion -and
             $report.input_schema_version -is [long] -and $report.input_schema_version -eq 3)
     }
     foreach ($check in $report.checks) { Add-Check "$Stage / $($check.name)" ([bool]$check.passed) }
@@ -97,8 +98,8 @@ try {
     Add-Check 'scoped Windows availability acquired for this validation' (-not $powerRequest.IsClosed)
     $previousArtifactSha256 = Get-GodotArtifactSha256 $activeArtifact -AllowMissing
     Assert-GodotProjectConfiguration (Get-Content -LiteralPath (Join-Path $project 'project.godot') -Raw)
-    Add-Check 'foundation metadata targets gameplay preview and schema 3' (
-        $metadata.projectVersion -ceq '0.4.0-preview' -and $metadata.inputSchemaVersion -eq 3)
+    Add-Check 'foundation targets current source and schema 3, not historical artifact acceptance' (
+        $sourceIdentity.projectVersion -ceq '0.5.0-preview' -and $sourceIdentity.inputSchemaVersion -eq 3)
     $scripts = Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.ps1' -Recurse -File |
         Where-Object { $_.Name -notin @('Install-Godot.ps1', 'Test-InstallerReuse.ps1') -and $_.FullName -notlike "$runtime\*" }
     foreach ($script in $scripts) {
@@ -286,8 +287,8 @@ finally {
             startedAt = $started
             completedAt = (Get-Date).ToUniversalTime().ToString('o')
             godotVersion = $local.versionOutput
-            projectVersion = $metadata.projectVersion
-            inputSchemaVersion = $metadata.inputSchemaVersion
+            projectVersion = $sourceIdentity.projectVersion
+            inputSchemaVersion = $sourceIdentity.inputSchemaVersion
             runPath = $runPath
             gpuIndexOverride = $GpuIndex
             windowsDriverInventory = $driverInventory

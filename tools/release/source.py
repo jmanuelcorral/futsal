@@ -6,15 +6,19 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from .common import digest, relative_name, require, same_path, text_digest
 from .process import run_process
 
-GAME_TEXT_SUFFIXES = (".gd", ".tscn", ".tres", ".cfg", ".godot", ".uid", ".gdshader")
-TOOL_TEXT_SUFFIXES = (*GAME_TEXT_SUFFIXES, ".py", ".json", ".yml", ".yaml", ".md", ".txt")
+GAME_TEXT_SUFFIXES = (".gd", ".tscn", ".tres", ".cfg", ".godot", ".uid", ".gdshader", ".import", ".json")
+TOOL_TEXT_SUFFIXES = (*GAME_TEXT_SUFFIXES, ".py", ".yml", ".yaml", ".md", ".txt")
 CONSUMED_PATHS = ("game", "tools/release", ".github/workflows/release.yml",
-                  "tools/godot/release.json", "LICENSE", "LICENSE.txt", "LICENSE.md")
+                  "tools/godot/release.json", "LICENSE", "LICENSE.txt", "LICENSE.md", "THIRD_PARTY_NOTICES.md",
+                  ".gitattributes")
 LFS_PREFIX = b"version https://git-lfs.github.com/spec/v1"
+PROJECT_NOTICES_NAME = "THIRD_PARTY_NOTICES.md"
+PROJECT_NOTICES_MAX_BYTES = 1024 * 1024
 
 
 def source_snapshot(project: Path) -> dict[str, str]:
@@ -38,6 +42,29 @@ def snapshot_digest(snapshot: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
+def requires_project_notices(identity: dict[str, Any]) -> bool:
+    version = identity["projectVersion"]
+    require(type(version) is str and re.fullmatch(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?", version) is not None,
+            "Version invalida para el contrato de avisos.")
+    return tuple(int(part) for part in version.split("-")[0].split(".")) >= (0, 5, 0)
+
+
+def source_documents(repository: Path, identity: dict[str, Any]) -> tuple[dict[str, str], dict[str, Any] | None]:
+    if not requires_project_notices(identity):
+        return {}, None
+    path = repository / PROJECT_NOTICES_NAME
+    require(path.is_file() and not path.is_symlink(), "Falta THIRD_PARTY_NOTICES.md regular en la fuente.")
+    require(0 < path.stat().st_size <= PROJECT_NOTICES_MAX_BYTES, "Tamano de THIRD_PARTY_NOTICES.md invalido.")
+    data = path.read_bytes()
+    normalized = data.decode("utf-8").replace("\r\n", "\n")
+    require(bool(normalized.strip()) and len(data) <= PROJECT_NOTICES_MAX_BYTES, "Avisos del proyecto vacios o excesivos.")
+    checksum = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+    return {PROJECT_NOTICES_NAME: checksum}, {
+        "source": PROJECT_NOTICES_NAME, "packaged": PROJECT_NOTICES_NAME,
+        "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "normalizedSha256": checksum,
+    }
+
+
 def require_git_root(repository: Path) -> None:
     result = run_process(["git", "rev-parse", "--show-toplevel"], repository, timeout=10)
     require(result.ok, f"No hay raiz Git verificable: {result.stderr.decode('utf-8', errors='replace')}")
@@ -58,7 +85,7 @@ def _ignored(name: str) -> bool:
 
 def _text(name: str) -> bool:
     return (Path(name).suffix in GAME_TEXT_SUFFIXES if name.startswith("game/") else
-            Path(name).suffix in TOOL_TEXT_SUFFIXES or name == "LICENSE")
+            Path(name).suffix in TOOL_TEXT_SUFFIXES or name in ("LICENSE", ".gitattributes"))
 
 
 def _content_digest(data: bytes, name: str) -> str:

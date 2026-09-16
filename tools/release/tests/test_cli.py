@@ -21,7 +21,7 @@ from tools.release.tests.test_audit import CandidateFixture, candidate_manifest,
 
 REPOSITORY = HERE.parents[1]
 COMMIT = "a" * 40
-VERSION = "v0.4.0-preview"
+VERSION = "v0.5.0-preview"
 
 
 class CliTests(unittest.TestCase):
@@ -207,6 +207,20 @@ class CliTests(unittest.TestCase):
                             self.assertEqual(report["buildType"], "release")
                             for field in ("templateEntry", "templateSha256", "engineWorkaround"):
                                 self.assertIsNone(report[field])
+                            self.assertEqual(report["thirdPartyNotices"], fixture.metadata["thirdPartyNotices"])
+                            self.assertEqual(report["sourceDocumentsSha256"], fixture.metadata["sourceDocumentsSha256"])
+
+    def test_passive_audit_rejects_foreign_notice_provenance_before_printing_success(self) -> None:
+        manifest = candidate_manifest()
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = CandidateFixture(Path(temporary), "windows-x86_64", manifest,
+                                       notice_bytes=b"not the committed or local source notice\n")
+            with mock.patch("tools.release.build.load_manifest", return_value=manifest):
+                result, output, errors = self.invoke(
+                    ["audit", "--repository", str(REPOSITORY), "--archive", str(fixture.archive)], {})
+            self.assertEqual(result, 1)
+            self.assertEqual(output, "")
+            self.assertIn("avisos archivados no corresponden", errors)
 
     def test_passive_audit_rejects_unaccredited_release_variant_before_projecting(self) -> None:
         manifest = candidate_manifest()

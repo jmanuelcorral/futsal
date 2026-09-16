@@ -90,6 +90,662 @@ glTF no convierte automáticamente este contrato de máscaras en un shader perso
 
 Solo activos de autoría propia por ahora, incluidos escudos, texturas y entorno. Bibliotecas externas, HDRI, servicios de pago o generación externa requieren selección y permiso explícitos posteriores, con licencia y atribución comprobadas. Instalar una herramienta no concede permiso sobre activos.
 
+### Excepción autorizada: atleta representativo — 2026-09-15
+
+El usuario autoriza expresamente, a las **10:22 del 2026-09-15**, descargar,
+adaptar e incorporar **Human Base Meshes v1.4.1 de Blender Studio, CC0**.
+Esta excepción concreta sustituye el bloqueo de esa base humana, no la regla
+para otros activos. No autoriza otras bibliotecas, HDRI, imágenes generadas,
+compras ni APIs de pago: **presupuesto de API 0**.
+
+- Selección inspeccionada: colección **`Body Male - Realistic`**, autor **Dan
+  Ulrich**, metadato de licencia **CC0**, cuerpo
+  `GEO-body_male_realistic` y sus dos ojos. Es anatomía humana adulta continua
+  con detalle multirresolución; **no incluye rig ni acciones de animación**.
+  No se utilizan variantes *primitive/stylized* ni un personaje de otra obra.
+- Archivo oficial: `human-base-meshes-bundle-v1.4.1.zip`, **50.643.039 bytes**,
+  SHA-256 `811f43accbb31a88266d932f8f5563b2d13586fca0ba2693aad1f5fe582b3515`.
+  El miembro `.blend` mide **49.420.489 bytes**, SHA-256
+  `3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137`.
+  Se comprobaron rutas, colisiones de nombres Windows, enlaces y CRC antes de
+  extraer exclusivamente los datos seleccionados; no se ejecutan textos embebidos.
+- La [página oficial](https://www.blender.org/download/demo-files/#assets),
+  el README interno y el metadato de la colección identifican CC0 y Blender
+  4.2+. Existe un texto residual `License` referido a **Rain Rig / CC-BY 4.0**:
+  se declara esta discrepancia para revisión de procedencia, no se incorpora
+  Rain Rig ni se atribuyen sus derechos o animaciones al atleta.
+- La referencia privada del usuario, de 1280 × 720, orienta **calidad anatómica,
+  ropa y postura**, no rostros, marcas, equipaciones ni escenario. No se publica
+  ni se convierte en `concept.png`. La captura real
+  `docs/images/gameplay-0.4-corner.png` muestra el problema de las piezas separadas.
+  Ninguna es una A-G2/A-G3 comparable aprobada.
+- Alcance de esta entrega: **un atleta de campo adulto de unos 1,75 m**, camiseta
+  de manga corta, pantalón de una pieza con entrepierna, calcetines, pelo corto
+  y zapatillas de sala propios. Preservar cabeza, orejas, manos y dedos de la base;
+  ocultar únicamente piel completamente cubierta, con solape suficiente.
+  No dedicar esta iteración a estadio, luz de partido, UI o multiplicar personajes.
+- Presupuesto específico de este candidato: **25–45 mil triángulos visibles,
+  máximo aproximado 60 mil**, mapas 1K–2K, tres materiales si es viable y ≤4
+  influencias normalizadas por vértice. Registrar valores reales y desviaciones;
+  no sustituye los presupuestos históricos de LOD de §7 ni acredita FPS.
+- Interfaz de primera pasada: fuente Z arriba / frente −Y, metros aplicados,
+  pies en el origen; glTF Y arriba / frente +Z. `Root` no deformante;
+  `Hips`, `Spine`, `Chest`, `Neck`, `Head`, cadenas bilaterales de clavícula,
+  brazo, antebrazo, mano, muslo, pierna, pie y puntera, con dedos útiles.
+  `AthleteSkin`, `AthleteKit`, `AthleteGear`; máscara textil RGBA de §3, albedo
+  sRGB, normal tangente +Y y ORM/máscaras lineales. El JSON del recurso registra
+  padres, posiciones, matrices de reposo y proporciones **medidas**, no fuerzas
+  de adaptación a los targets provisionales.
+- Coordinación conserva la autoridad y los targets actuales de apoyos/pases/gestos;
+  adapta su presentación al `Skeleton3D` y el frente −Z de `MatchSnapshot` con
+  un único giro de raíz. No cambiar colisiones ni mover física mediante animación.
+- Propiedad de Lambert: fuente, generador, mapas maestros y manifiestos en
+  `art/source/athletes/court_athlete/`. Caché y autoinspección local en
+  `.dream-loop/downloads/` y `.dream-loop/athlete-upgrade/`. **No escribir en
+  `game` hasta que coordinación confirme aislamiento del candidato 0.4**;
+  después exportar directamente a
+  `game/assets/athletes/court_athlete/court_athlete.glb`, sin `art/exports` ni
+  copias derivadas paralelas. Ferro mantiene instalación/pipeline/distribución.
+
+Se trata de una **mejora de atleta autorizada**, no del inicio del bucle formal
+de puntuación. Máximo tres rondas de esta iteración; parar tras dos sin mejora
+y reservar margen para corregir la importación tras capturas reales de coordinación.
+El render de Blender sirve sólo para autoinspección. Vasquez/Ripley mantienen la
+crítica independiente; no hay autoaprobación de arte, gate, movimiento ni rendimiento.
+El puente de estado no está disponible: no se escriben historias, logs o decisiones
+de Squad como sustituto. Los manifiestos son contratos técnicos del recurso.
+
+#### Hito de fuente candidata, r2 — no aceptación artística
+
+**Referencia anterior a los helpers/COLOR0.** Los números y capturas de este
+hito describen la fuente `99be9c22…`; el contrato v2 posterior, descrito más abajo,
+es el vigente para integración. No confundir sus hashes o formatos de máscara.
+
+Fuente editable y generador en `art/source/athletes/court_athlete/`:
+`court_athlete.blend`, `build_athlete.py`, auxiliares de malla/atlas,
+`acquire_base.py`, `inspect_base.py`, `inspect_athlete.py`,
+`export_athlete.py`, `maps/`, `manifest.json`, `rig_manifest.json` y
+`provenance.json`. El `.blend` contiene la anatomía original multirresolución
+oculta para autoría, además del atleta vestido de runtime; el exportador excluye
+esa fuente de alta resolución.
+
+| Medida real de la fuente r2 | Resultado |
+| --- | --- |
+| Altura vestida de reposo | **1,745953 m**, suela a menos de 0,001 mm del plano z=0 |
+| Geometría de runtime | **47.186 triángulos / 24.386 vértices** antes de splits glTF |
+| Desviación del objetivo preferido | +2.186 triángulos sobre 45 mil (**4,86 %**); por debajo de 60 mil. Cara y manos sin decimación |
+| Esqueleto | **52 huesos, 51 deformantes**, ninguno deformante sin vértices; `Root` no deformante |
+| Pesos | **Máximo 4**, cero vértices sin peso; error máximo de normalización **4,47 × 10⁻⁸** |
+| Materiales / mallas de runtime | **3 / 3**: piel, textiles y accesorios |
+| Mapas | Piel y kit **2048²**, accesorios **1024²**; albedo/normal/ORM por material y máscara RGBA de kit; tres maestros AO **1024²** adicionales |
+| Tamaño PNG en disco | **5.775.395 bytes** en los diez mapas previstos para runtime; **7.279.806 bytes** incluyendo maestros AO. No es residencia GPU |
+| Fuente `.blend` comprimida | **34.077.538 bytes**, SHA-256 `99be9c22bd32396241be426e870703a49d27a981e5a039d0daae227fe59f684f` |
+
+Rig medido para adaptar presentación, **no para modificar autoridad**:
+muslo/pierna **0,398271 / 0,416950 m**; brazo/antebrazo
+**0,262953 / 0,227841 m**. En coordenadas glTF, hombro izquierdo
+`(0,173823; 1,359882; −0,009043)`, articulación de cadera izquierda
+`(0,096457; 0,915779; −0,010048)` y tobillo izquierdo
+`(0,175832; 0,107955; −0,057271)`. Rest pose A con pies abiertos:
+leer ambos lados y matrices completas de `rig_manifest.json`, no reconstruirlos
+a partir del resumen. El antebrazo medido termina en **muñeca**; según el contrato
+de integración aclarado posteriormente, el target provisional `hand` termina en
+**centro de palma**. No comparar ambos como si fueran el mismo segmento ni estirar
+la anatomía para compensar esa diferencia de semántica.
+
+**Comprobado:** 15/15 controles estructurales de la fuente, matrices aplicadas,
+normales de piel orientadas como la anatomía original, pesos, ausencia de cámaras,
+luces y acciones en el recurso. La máscara PNG suma exactamente **255 por texel**
+entre sus cuatro canales de 8 bits. El probe de poses verifica alineación real de
+cabezas/colas de huesos en espacio de armadura; se corrigió la mezcla errónea con
+`Bone.vector`, relativo al padre. La pose de flexión alcanza ángulos interiores de
+rodilla de aproximadamente 98°/80° y codo de 88°; esto no valida el retarget de Godot.
+
+Autoinspección real de **Cycles CPU**, 1024 × 1024, en
+`.dream-loop/athlete-upgrade/r2/source-{front,back,flex,detail}.png`;
+metadatos/hashes en `source-inspection.json` de esa carpeta. **No son capturas del
+juego ni prueba de FPS.** No se publican las referencias privadas del usuario.
+
+**Defectos visibles pendientes, no ocultos por los controles técnicos:** piel
+intersectando camiseta en cuello/espalda alta y cintura del pantalón atravesando
+el faldón, que parece roto especialmente por detrás. La corrección debe separar
+las capas y conservar solapes, no cambiar luz o recortar la captura. Acabado de
+pelo y tejido todavía no final; revisar UV de costuras y su AO: el raster de kit
+detecta 10.878 texels con cobertura múltiple, frente a 25 en accesorios y 2 en piel.
+No hay LODs, clips de gameplay, rig facial o contenido específico de portero.
+
+Se han consumido **dos pasadas locales de fuente/autoinspección** y se reserva
+la tercera para corregir estos puntos junto con defectos de importación que
+devuelva coordinación. **No se ha escrito `game/assets` ni exportado el GLB**:
+falta confirmación explícita de aislamiento de 0.4. El exportador comprueba ese
+permiso antes de crear el destino; la prueba negativa pasó sin crear carpeta.
+Las 15 opciones previstas existen en la API instalada de exportación glTF,
+pero eso **no sustituye ejecutar/verificar la exportación**.
+
+Comandos de construcción y autoinspección ejecutados desde la raíz (Blender en
+`%LOCALAPPDATA%/Programs/Blender/blender-4.5.13-windows-x64/blender.exe`):
+
+```powershell
+python art\source\athletes\court_athlete\acquire_base.py --download
+python art\source\athletes\court_athlete\acquire_base.py --extract-reviewed human-base-meshes-bundle-v1.4.1/human_base_meshes_bundle.blend
+# Con la ruta de Blender anterior en $blender:
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\inspect_base.py
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\build_athlete.py
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\inspect_athlete.py -- --round r2 --views front back flex detail --samples 24
+```
+
+El primer intento de construcción se detuvo por superar el techo geométrico
+(93.590 triángulos); se redujeron subdivisiones de ropa/accesorios, sin decimar
+cara/manos. También se corrigieron la transformación de ojos cargados como datos,
+normales invertidas de pantorrillas abiertas y desplazamiento inestable del pelo.
+Los errores de autoría/probe no son regresiones del juego. Exportación, crítica
+independiente de Vasquez/Ripley y validación de contactos/rendimiento siguen pendientes.
+
+#### Contrato de palma y zapatilla para integración — 2026-09-15
+
+**Primera versión del contrato de contactos.** El cambio v2 posterior añade los
+huesos auxiliares solicitados y sustituye la máscara runtime por COLOR0; conserva
+los centros, ejes, dimensiones y ecuación de muñeca de esta sección.
+
+`hand` significa **centro de palma**, no cabeza del hueso `Hand_L/R` ni centro
+del balón. Se añaden **locators de datos** `Palm_L` y `Palm_R`, sin huesos
+auxiliares, bajo `rig_manifest.json → contact_contract.palms`.
+`contact_locators.py` los mide sobre triángulos reales de la piel; conserva
+índices, coordenadas baricéntricas, normal, matrices y huella del `.blend`.
+El generador conserva este contrato al reconstruir el recurso.
+
+Offsets en metros **en la base local del hueso Hand correspondiente**, no en
+ejes del actor:
+
+| Locator | X local | Y local | Z local | Distancia muñeca → palma |
+| --- | ---: | ---: | ---: | ---: |
+| `Palm_L` | −0,02182638 | 0,07188790 | 0,00401302 | 0,07523539 m |
+| `Palm_R` | 0,02209726 | 0,07188193 | 0,00400400 | 0,07530832 m |
+
+La diferencia pequeña entre lados procede de la superficie de la base, no de
+una escala distinta. El locator se sitúa en la superficie palmar central
+inspeccionada; el primer sondeo proximal incidía en la almohadilla tenar y fue
+descartado, no publicado como centro de palma.
+
+Para conservar el target existente:
+
+```text
+wrist_origin = desired_palm_center - posed_hand_basis * position_bone_local_m
+```
+
+No volver a añadir aquí un radio/offset de balón que ya aplique el resolver de
+la acción. Todos los locators incluyen `axes_bone_local`, `axes_blender`,
+`axes_gltf` y matrices completas: **+Z del frame = forward**, **+Y = up**,
+**+X = up × forward**, base ortonormal dextrógira.
+
+- **Manos:** forward hacia los nudillos proyectado en el plano tangente central;
+  up es la normal geométrica suavizada **hacia fuera de la palma**, no vertical
+  del mundo ni dorso. No asumir que forward/up coinciden con los ejes del hueso.
+- **Pies:** forward hacia la puntera, paralelo al plano de suela; up se aleja
+  del suelo. En reposo equivale a +Z de Blender / +Y glTF. Los pies están abiertos
+  22°: medir alcance sobre ese forward, no sobre Z crudo del actor.
+- Si el importador cambia las bases de huesos, reconstruir el locator local con
+  `imported_bone_global_rest.inverse() * transform_gltf`, dentro de la raíz del
+  modelo antes del giro global para `MatchSnapshot`. No reinterpretar el offset
+  local como coordenadas glTF ni girarlo dos veces.
+
+Dimensiones extraídas de la geometría final de **cada** zapatilla, sin deformar
+el cuerpo o bajar artificialmente el tobillo:
+
+| Medida | Fuente real | Target provisional |
+| --- | ---: | ---: |
+| Altura de articulación de tobillo | **0,107955 m** | 0,080 m |
+| Alcance frontal exterior desde tobillo | **0,199502 m** | 0,195 m |
+| Alcance posterior exterior desde tobillo | **0,068942 m** | ~0,075 m |
+| Alcance frontal/posterior de suela | **0,197658 / 0,067342 m** | — |
+| Longitud / anchura máxima de suela | **0,265000 / 0,119600 m** | — |
+| Suela: límites verticales | **−0,000001 a 0,029465 m** | suelo 0 |
+| Suela inferior en puntera / talón | **0,004465 / 0 m** | — |
+
+La diferencia relevante es **+27,955 mm de altura del tobillo anatómico**;
+puntera y talón exteriores difieren aproximadamente +4,502/−6,058 mm.
+Adaptar anclajes/targets de presentación, no colisiones ni proporciones del humano.
+Los límites verticales de la suela incluyen la elevación de puntera; no son una
+medición uniforme de espesor ni del tamaño de colisión.
+
+**Material confirmado:** PNG `maps/kit_mask.png`, **RGBA8 Non-Color en UV0**,
+no `COLOR0`, sin transparencia. R camiseta principal, G pantalón **y los estrechos
+paneles laterales secundarios existentes de camiseta**, B calcetines, A ribetes.
+Se conservan albedo sRGB neutro, normal tangente +Y y ORM lineal exportables;
+roughness permanece en G de ORM. En runtime se prevé `textures/kit_mask.png`
+junto al GLB, pero aún no se ha escrito ese destino.
+
+Validación local **29/29** de reconstrucción de locators, bases, conversión de
+ejes y conservación del target palmar con rotaciones distintas. En el diagnóstico
+de muñeca a ±35° sobre X/Z local, la diferencia máxima entre superficie skineada y
+locator fue **1,04 × 10⁻⁷ m**, dentro del ruido numérico; no mide blocajes/saques
+reales del juego ni cubre poses articuladas de los dedos. Fuente `.blend`, rig,
+geometría y mapas permanecen byte-idénticos a r2. Esta ampliación de metadatos no
+consume la pasada artística reservada ni habilita escribir `game`.
+
+El hook del generador reproduce exactamente estos datos sobre la fuente actual.
+Dos mutaciones negativas —offset de palma puesto a cero y up del pie reemplazado
+por un eje local supuesto— se rechazaron. Comando ejecutado para medir y actualizar
+sólo los manifiestos, sin guardar de nuevo el `.blend`:
+
+```powershell
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\contact_locators.py -- --update-manifests
+```
+
+#### Contrato vigente v2: Palm auxiliares y COLOR0 — 2026-09-15
+
+Petición explícita de coordinación de las **12:20**: alinear el recurso con
+cadenas directas `Thigh → Shin → Foot → Toe` y
+`UpperArm → Forearm → Hand → Palm`, sufijos `_L/_R`, y un shader que consume
+COLOR0 como datos RGBA. Este cambio **sustituye la elección anterior de locators
+sólo JSON y máscara PNG runtime**, sin alterar anatomía, gameplay o física.
+No se ha leído ni editado `.dream-loop/athlete-upgrade/integration/`.
+
+- **54 huesos, 51 deformantes.** `Root`, `Palm_L` y `Palm_R` no deforman.
+  Los Palm son hijos directos de Hand, con origen exactamente en los centros
+  palmares medidos. Su base auxiliar usa **+Y hacia fuera de la palma** y **+Z
+  hacia los dedos**; la cola de autoría mide 20 mm, sin modificar la malla.
+  Se conservan también los offsets relativos a Hand en `contact_contract`,
+  ahora schema **2**, para comprobación y adaptación de bases del importador.
+- **COLOR0 real en `AthleteKitMesh`:** atributo Blender `FLOAT_COLOR`, dominio
+  `CORNER`, 48.192 esquinas / 771.072 bytes de datos float en fuente.
+  Las discontinuidades se separan por vértice al exportar a glTF **`COLOR_0`**;
+  el shader Godot lo recibe como **`COLOR`**. No es una promesa de importación
+  comprobada: todavía falta la exportación del mesh real.
+- Los valores se trasladaron del PNG propio existente por muestreo bilineal en
+  las esquinas UV y normalización. Error medido de transferencia y suma: **0**
+  en la precisión float de la fuente. Se conservan R principal, G pantalón
+  **y paneles laterales secundarios de camiseta**, B calcetines y A ribetes.
+  Piel y accesorios no reciben ese atributo de máscara.
+- `maps/kit_mask.png` permanece como **maestro de autoría**, no como entrada
+  runtime activa. Albedo neutro, normal +Y y ORM exportables permanecen intactos.
+  El exportador prevé los **nueve PNG PBR**, **5.579.939 bytes** en disco; ya no
+  copia la máscara PNG a `game`. No es todavía un tamaño de GLB medido.
+- COLOR_0 es **dato**, no color base ni transparencia. Usar el shader de kit de
+  coordinación; un visor glTF genérico podría mostrar los canales de máscara
+  al multiplicarlos como color de vértice. No convertir alpha en opacidad ni
+  aplicar una transformación sRGB a estos pesos.
+
+Guardas explícitas en `export_athlete.py`:
+
+```text
+export_def_bones = False
+export_vertex_color = "NAME"
+export_vertex_color_name = "COLOR0"
+export_all_vertex_colors = False
+export_active_vertex_color_when_no_material = False
+```
+
+Se consultaron estas opciones en Blender 4.5.13 instalado. La comprobación del
+GLB exigirá Palm dentro de los joints del skin, las cadenas directas, COLOR_0
+RGBA normalizado con sus cuatro zonas y material de kit opaco. Rechaza un COLOR_0
+blanco ficticio y la pérdida de alpha; no basta comprobar que existe el atributo.
+**Estas guardas no acreditan que se haya exportado/importado el atleta.**
+
+Fuente actual: `court_athlete.blend`, **34.065.947 bytes**, SHA-256
+`55522a44d8e750283a632e7f3be0b85cdc054b614af7af0098adb2ae13c26ead`.
+Los fingerprints de posiciones/topología, suavizado, UV y pesos de las tres
+mallas son idénticos antes/después; delta máximo de las matrices rest de los
+52 huesos anteriores: **0**. Se mantienen 47.186 triángulos y 24.386 vértices de
+fuente, tres materiales y los trece mapas maestros byte-idénticos. El `.blend`
+anterior está archivado en
+`.dream-loop/athlete-upgrade/source-archive/court_athlete-99be9c22bd32.blend`
+para vincular correctamente las capturas r2; no es una exportación runtime paralela.
+
+Comprobado localmente: **27/27** del contrato de fuente helpers/COLOR0,
+**29/29** de contactos y **15/15** estructurales; adaptación idempotente y hook
+del generador verificados sobre la fuente guardada, sin repetir modelado/horneados.
+Además, **13/13** pruebas en memoria de las guardas de exportación
+(cinco entradas válidas y ocho rechazos esperados; float, enteros normalizados,
+offsets y stride), sin crear un GLB. Dos mutaciones negativas de la fuente
+(Palm deformante y COLOR0 blanco) se detectan; se verificaron las trece huellas
+de mapas. Repetir el CLI de adaptación sólo valida, sin reescribir fuente o
+manifiestos ni reasignar las capturas r2. El exportador sin autorización se
+rechazó antes de crear destino.
+El **59/59 nativo** comunicado por coordinación corresponde a su driver
+sintético, no a este mesh; no se presenta aquí como ejecución propia ni como
+aceptación del atleta.
+
+Comando ejecutado para el cambio técnico explícito:
+
+```powershell
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\rig_material_contract.py -- --update-source
+```
+
+Validación reproducible ejecutada, sólo lectura y sin render/exportación:
+
+```powershell
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\validate_integration_contract.py
+```
+
+Los defectos artísticos de cuello/faldón siguen pendientes. **No se consumió
+la tercera pasada artística, no se tocó `game`, ni se concedió aprobación visual,
+de movimiento o FPS.** La exportación directa continúa esperando el aviso de
+aislamiento del candidato 0.4.
+
+#### Exportación directa autorizada — 2026-09-15, después del aislamiento
+
+**Ferro confirmó a las 12:50 el aislamiento y liberó el destino del atleta.**
+La fuente 0.4 queda en `build\release\frozen-04-12fb5d6\source`, según su
+confirmación; Lambert no ha modificado esa fuente, snapshots, `build\windows`,
+tooling, presets, código de partido o la carpeta de integración. No hay commit,
+push ni publicación asociados a esta entrega.
+
+Recurso real en `game\assets\athletes\court_athlete\court_athlete.glb`:
+**8.304.648 bytes**, SHA-256
+`4cbe87c13cd679427d2c4c270658a182ecda991baaa2b4e7d6a4252371535157`.
+Incluye **47.186 triángulos, 33.898 vértices glTF** tras separaciones de UV,
+normales y datos de color, **tres mallas/materiales, un skin y 54 joints**.
+Palm_L/R están realmente dentro del skin y conservan las cadenas directas.
+No hay cámaras, luces ni clips de animación exportados.
+
+**COLOR_0 real:** VEC4 de `UNSIGNED_SHORT` normalizado, 14.076 vértices del kit.
+Error máximo de suma de canales: `1,52590219e-5`; diferencia máxima contra el
+muestreo del PNG maestro: `7,95641016e-6`. Se conservan los cuatro canales como
+pesos, no opacidad. El shader de coordinación sigue siendo necesario.
+
+El primer intento real descubrió n-gons incompatibles con el cálculo de
+tangentes de Blender. Se resolvió **sólo durante la exportación**, mediante el
+modificador nativo Triangulate: 22 caras de ropa y 122 de accesorios, sin mover
+vértices ni cambiar pesos, UV, COLOR0 o presupuesto de triángulos. Una inspección
+numérica posterior detectó una tangente nula en una cara casi horizontal del
+borde superior del pantalón: el suavizado compartía la normal de la pared
+lateral. La preparación separa **la normal de esa única cara**, no inventa
+tangentes ni modifica geometría. Se comprueban componentes finitos, longitudes,
+ortogonalidad y handedness del marco tangente en el GLB final.
+
+El exportador valida un archivo temporal dentro del **mismo destino autorizado**
+antes de reemplazar `court_athlete.glb`; no queda otro GLB derivado ni se usa
+`art\exports`. La fuente `.blend` permanece byte-idéntica (`55522a44…`), con sus
+24.386 vértices de autoría. Las diferencias de triangulación y normal de cintura
+se registran en `export_manifest.json → export_only_geometry_preparation`.
+Una segunda ejecución completa reprodujo **el mismo GLB byte a byte** y su hash.
+
+Comprobación sobre el binario final: influencias no negativas y normalizadas
+(error máximo `1,78813934e-7`), índices de joints dentro del skin y marcos
+normales/tangentes válidos para los 33.898 vértices. Los **nueve PNG PBR embebidos
+son idénticos píxel a píxel** a sus maestros. Las advertencias de Blender sobre
+múltiples nodos de imagen para un sampler no cambiaron los mapas: los nodos
+usan Linear/Repeat y el GLB conserva ese comportamiento, con mipmapping.
+También se comprobaron las nueve copias PNG y las copias de `rig_manifest.json`
+y `provenance.json` dentro del destino. La máscara PNG no se copia a runtime.
+
+Regresión local actual: **27/27** contrato de fuente, **15/15** estructura,
+**29/29** contactos, trece hashes de mapas, dos mutaciones negativas de fuente
+y **17/17** guardas de exportación, incluyendo tangente nula, paralela y normal
+no unitaria. Los trece casos anteriores siguen incluidos; no se ha reducido
+ningún criterio para aceptar la exportación.
+
+Comando de exportación ejecutado con la confirmación de Ferro:
+
+```powershell
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\export_athlete.py -- --permit-game-export --approval "Ferro 2026-09-15 12:50+02:00: 0.4 aislado en build\release\frozen-04-12fb5d6\source; destino del atleta liberado."
+```
+
+**Pendiente de coordinación:** importar/animar el GLB real con el driver,
+devolver capturas de partido y detalle (incluidos cuello, cintura, planta y
+palma), y revisión independiente. La última pasada artística permanece reservada
+para esos defectos; la corrección técnica de exportación no constituye otra
+ronda visual evaluada. No se ha ejecutado Godot para esta entrega ni se concede
+aprobación artística, de gameplay o FPS.
+
+#### R3 final: ropa tras el feedback del EXE — 2026-09-15
+
+**Última pasada artística autorizada: 3/3, ninguna restante.** Coordinación
+aportó nueve PNG reales del EXE en
+`.dream-loop\athlete-upgrade\builds\r2-capture-c496a18b506c4b1ca6ecbf733906aa3a\captures`.
+Su manifiesto declara 1920×1080, RTX 2000 Ada, `editor_binary=false`,
+sin medición FPS ni gate aprobado. Las comprobaciones nativas comunicadas
+(216 skinning, 190 gestos, 230 visuales y 204 integración) corresponden a **R2**,
+no se presentan como ejecuciones propias ni aceptación de R3. El feedback visual
+no es un dictamen independiente.
+
+**Cambios propios y acotados:** cuello de camiseta elevado 12 mm sin mover cuello
+anatómico ni huesos; ajuste de holgura contra la base real; solape de camiseta y
+pantalón separado al menos 9 mm en la zona medida; anclaje compartido a Hips con
+transición de pesos en la cintura. Camiseta, shorts y cada calcetín incorporan
+dobladillos conectados, de 1,4 mm y retorno interior de 12 mm, con pesos heredados
+de su propio borde. Se eliminan los cordones independientes de todos los bordes;
+el canal A de ribete queda en el fino remate del collar. El kit pasa de quince
+componentes a **cuatro**: camiseta, shorts de una pieza y dos calcetines.
+
+La medición sobre R2 detectó penetración mayor de 1 mm en **75 vértices de
+camiseta, 26 de shorts y 42 de calcetín**, además de los ribetes. La candidata R3
+ajustada tiene **cero vértices exteriores** por debajo de ese criterio en reposo.
+La holgura diseñada es 7 mm, con 3,5 mm en el pliegue axilar estrecho, hasta 29 mm
+en la cintura suelta, y 5,5 mm en calcetines; no se fuerzan dos capas de aire de
+7 mm donde la anatomía de reposo no las permite. Medidas, tolerancias y límites
+de las consultas se conservan en `manifest.json → garments.r3_tailoring`.
+Esto no sustituye la inspección del movimiento retargeteado real.
+
+**Rig, piel y calzado preservados:** mismos nombres y matrices rest de los
+54 huesos, Palm incluidos; misma geometría/UV/pesos de piel y accesorios; ocho
+maestros de piel/calzado byte-idénticos. No se modifican la anatomía para targets
+antiguos, los pies, toe-out, cámara, retarget, iluminación ni shaders de
+coordinación. La ropa conserva pesos anatómicos interpolados; los dobladillos no
+se vuelven a vincular por cercanía a otra zona del cuerpo. Se corrige también
+la utilidad de transferencia para borrar influencias residuales y compartir
+cálculo baricéntrico de doble precisión con los contactos.
+
+Sólo se regeneraron los **cinco mapas de kit**. Su micro-normal baja de 0,047
+a 0,015, con variaciones menores de albedo/roughness; se mantienen los pliegues
+geométricos y los tres materiales. No se retoca la piel para compensar el
+doble tintado, el factor de roughness o el patrón punteado del EXE: la captura
+CPU con el PBR original no muestra ese patrón. La cuantización de COLOR0 a
+RGBA8 en Godot pertenece a la normalización que coordinación ya aplica en el
+shader; **no se reexporta para ocultarla**.
+
+**Fuente final:** `art\source\athletes\court_athlete\court_athlete.blend`,
+33.959.644 bytes, SHA-256
+`88276733d1f8271a4a5481089dbf442fc6ee61252c28cedd75e69c9e12a309dd`.
+**GLB final directo:** `game\assets\athletes\court_athlete\court_athlete.glb`,
+7.739.520 bytes, SHA-256
+`79ad10342db6f6bbb0f97f11b3680647e45ff0feb1611937df87fff78d0d8b3b`.
+Presupuesto real: **43.345 triángulos, 22.441 vértices de fuente / 31.450 glTF,
+54 joints / 51 deformantes, tres materiales, máximo cuatro influencias**.
+El GLB contiene nueve PNG PBR, idénticos píxel a píxel a los maestros; las nueve
+copias runtime suman 5.223.860 bytes y los trece maestros 6.964.674 bytes.
+COLOR_0 sigue siendo VEC4 UINT16 normalizado, con las cuatro zonas presentes.
+
+**Fallo técnico detectado y corregido:** el guardado incremental trató las
+rutas relativas Blender `//maps/...` como rutas UNC de Windows y produjo una
+primera inspección magenta. Se repararon sólo enlaces, sin cambiar geometría,
+mapas ni diseño; las imágenes inválidas permanecen bajo
+`.dream-loop\athlete-upgrade\r3\invalid-missing-map-links`. No son evidencia de
+acabado ni una cuarta ronda artística. Ahora se validan explícitamente las
+rutas y la lectura de mapas antes de guardar/exportar. Las capturas corregidas
+front/back/flex/detail y su manifiesto están en `.dream-loop\athlete-upgrade\r3`.
+
+Comandos ejecutados (Blender existente, CPU):
+
+```powershell
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\rebuild_wardrobe.py -- --final-r3
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\rebuild_wardrobe.py -- --repair-r3-map-links
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\inspect_athlete.py -- --round r3 --views front back flex detail --samples 24
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\validate_integration_contract.py
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\export_athlete.py -- --permit-game-export --approval "Coordinacion 2026-09-15 14:38+02:00: ultima pasada R3 de ropa y reexport directo autorizados; 0.4 aislado en build\release\frozen-04-12fb5d6\source; sin cambios de retarget, rig rest, fisica o release."
+```
+
+El generador completo `build_athlete.py` comparte la misma construcción de ropa;
+el comando incremental parte de R2 y rechaza otra pasada artística sobre R3.
+No hay nueva copia `.blend`, `art\exports`, descarga, API pagada ni cambios en
+release, `game\match`, tests o tooling.
+
+Controles finales: **27/27** de contrato, **18/18** estructura/enlaces,
+**29/29** contactos, **17/17** guardas, tres regresiones de pipeline y dos
+mutaciones negativas; pesos y marcos tangentes comprobados también en los
+31.450 vértices del GLB. En las cuatro vistas CPU examinadas ya no se observan
+las roturas blancas de ropa de R2. **Límites honestos:** boca de zapatilla aún
+irregular y 10.772 texels de cobertura múltiple en el atlas de kit; las costuras,
+cobertura extrema y retarget real quedan pendientes de la revisión del EXE,
+sin evaluación independiente, score, AAA ni FPS. No se inicia otra ronda
+artística dentro de este encargo.
+
+**Feedback adicional de retarget, recibido a las 15:36:** las capturas en
+`.dream-loop\athlete-upgrade\builds\retarget-capture-6217f7ef41214f24a7667f41ed988c7a\captures`
+siguen usando el **GLB R2 `4cbe87c1…`**, no el R3 `79ad1034…` ya exportado.
+Se inspeccionaron frente, espalda y sprint: siguen presentes los cierres y
+ribetes defectuosos de R2, aun con mejor apoyo y brazos. No se atribuyen esos
+resultados al recurso R3 ni se descarta la necesidad de verificarlo en el EXE.
+Los 235/235 de skinning/retarget y las métricas de apoyo comunicados por
+coordinación pertenecen a esa combinación de runtime y R2.
+
+Se mantienen como límites el **pelo de silueta rígida tipo casco** y la lectura
+del tejido, todavía pendientes de juicio integrado. La trama puntuada también
+aparece fuera del atleta; coordinación investiga auto-sombras/SSAO/aliasing.
+Su origen no queda demostrado aquí y no se compensa alterando mapas de piel.
+Se conservan los ocho maestros de piel/calzado y todo el rig para que la
+calibración real de coordinación se mantenga al consumir R3.
+
+#### R3 + normalización técnica de formato — 2026-09-15, 16:11
+
+Encargo explícito de coordinación, **no cuarta ronda ni cambio visual**:
+convertir únicamente `skin_normal.png` de RGB8 a **RGBA8 opaco**. La ejecución
+verbose del candidato `79ad…` avisaba:
+`Image format RGB8 not supported by hardware, converting to RGBA8`,
+en `texture_storage.cpp:2855`. Evidencia aportada y leída en
+`.dream-loop\athlete-upgrade\builds\r3-candidate-dec184a44ee54e9681b0f653e2db0148\gameplay-artifact-rendered\native.stderr.log`.
+Los resultados nativos del candidato anterior no se reasignan a este hash.
+
+Se conservaron **todos los bytes RGB** y la resolución 2048×2048; se añadió
+alfa **255 a los 4.194.304 píxeles**, sin reutilizar un canal normal como alfa.
+Hash de los bytes RGB, antes y después:
+`896a3c750f3a216d621166a4b075eeff98e9502045de4dc8fec2129162897fd6`.
+El maestro, su copia runtime y el PNG extraído del GLB nuevo son byte-idénticos.
+Los otros doce maestros PNG y las otras ocho imágenes embebidas no cambiaron.
+
+| Recurso técnico actual | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `maps\skin_normal.png` y `textures\skin_normal.png` | 1.978.822 | `a0ed497d4f1b61f72bb670f70c9f6be1d2fe628d30cf6728bfdc07d77a48e67c` |
+| `court_athlete.blend` | 33.950.289 | `34b519c921b5101974e40cdd70ff6d576e6544ff032f28feb8f6d054ccc9b53f` |
+| `game\assets\athletes\court_athlete\court_athlete.glb` | 8.038.876 | `72bb973ced0b5cb44d6871c23c9e1a8c3fb35db85adc7bc66673f74a61becc66` |
+
+Prueba antes/después persistida en `normal_encoding_manifest.json`: tres mallas,
+COLOR0, UV, pesos, transforms, los 54 huesos/rest/Palm y parámetros/conexiones
+de materiales idénticos incluso después de guardar y reabrir Blender.
+El GLB conserva **los 23 accessors completos** —incluidos geometría, normales,
+tangentes, pesos e inverse binds— y el mismo documento de rig/materiales.
+No se recalcularon formas, poses, medidas, rig ni ropa. Se mantienen **43.345
+triángulos / 31.450 vértices glTF**, tres materiales y una única piel de 54 joints.
+
+`atlas_tools.py` normaliza de forma idempotente y el bake de piel genera alfa
+opaco reproducible. Se comprueban RGBA8/2048 en fuente y GLB; no se desactiva
+`--verbose`, no se ocultan avisos y no se modifican `.import`, Godot, settings
+de coordinación ni pruebas de partido. La comprobación independiente con
+Pillow/NumPy confirma RGB idéntico y alfa 255 dentro del binario exportado.
+Regresiones: **27/27**, **19/19**, **29/29**, **21/21** guardas, tres pruebas de
+conversión/opacidad/idempotencia y las tres anteriores de pipeline.
+
+Comandos ejecutados:
+
+```powershell
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\normalize_skin_normal.py -- --apply
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\validate_integration_contract.py
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\export_athlete.py -- --permit-game-export --approval "Coordinacion 2026-09-15 16:11+02:00: R3 + normalizacion tecnica exclusiva skin_normal RGB8 a RGBA8 alpha255; RGB/geom/rest/UV/pesos intactos, sin nueva ronda artistica; reemplazo avisado y hashes finales obligatorios."
+& $blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python art\source\athletes\court_athlete\normalize_skin_normal.py -- --verify-export
+```
+
+Se avisó antes de reemplazar el GLB `79ad…`, que permaneció intacto durante
+la preparación. Las capturas del EXE congelado con `79ad…` mantienen su
+atribución; la normalización de Lambert no añadió renders ni retoques artísticos.
+
+**Cierre técnico confirmado por coordinación — 2026-09-15, 16:55.**
+Reimportado el GLB `72bb…` y validado en motor y en el EXE SHA-256
+`4b1892467e21e946cee3722d1bcf243570d370b67933367fb5f2b83f8ddaf9a5`.
+Los nueve PNG extraídos son RGBA8, con alfa 255 y RGB idéntico a sus maestros.
+El aviso RGB8 está **ausente** en la ejecución final con lector estricto
+`--verbose`, sin whitelist ni supresión. Son resultados ejecutados y comunicados
+por coordinación, no una revisión independiente de Lambert.
+
+Nueve checks permanentes nuevos de RGBA8 opaco/tres materiales elevan piel de
+268/268 a **277/277**. Restantes contratos finales: **67/67 rig, 190/190 gestos,
+232/232 visual y 238/238 integración**. Evidencia de fuente en
+`.dream-loop\athlete-upgrade\validation\r3-final-source-45160fa792e84c51b34016e21d13f8ee`
+y comprobación de piel identificada como `rgba-skinning-80efa98a0ed24679b8267e5819d74a4a`.
+Los controles automatizados de «visual» no equivalen a juicio artístico.
+
+Evidencia del EXE/candidato/exportación/validación runtime en
+`.dream-loop\athlete-upgrade\builds\r3-rgba-final-e7ca816f0fd7448d8fc679481cf71cb4`:
+**1.097 controles headless y 1.137 en ejecución renderizada con 20 PNG**,
+validados por el lector estricto. Cinco negativos de URI/rutas existentes con
+`--verbose` devuelven código 2. Incluye nueve vistas reales, cobertura de cortes
+con 25 renders y sprint con al menos 24; no son mediciones de FPS.
+
+La autorrevisión de coordinación de frente, dorso, sprint y 5v5 aprecia una
+mejora anatómica clara y las principales grietas resueltas. Persisten pelo tipo
+casco, manos abiertas y limitaciones de acabado superficial, calzado y bajos.
+**R3 artística cerrada en 3/3 y codificación resuelta; GO técnico independiente
+de Vasquez (`SOURCE_APPROVE` + `ARTIFACT_APPROVE`) para EXE `4b189246…` y GLB
+`72bb…`.** Preview local entregada en
+`build\windows\players-r3-preview\FutsalPlayers-preview.exe` y ZIP
+`build\windows\futsal-players-r3-preview-windows-x86_64.zip`
+(44.608.409 bytes; SHA-256 final
+`9c6a46d6186f0bbab3f88167a4e19c1b437c0919ac0380c722bf136fdd148ac4`),
+separada de la 0.4 pública; sin aprobación de G2/G3, mando ni publicación.
+El hash final sólo incorpora la errata documental de `README.txt` y
+`BUILD_INFO.json`: arranque normal 5v5; F1 permite elegir 1v1/5v5.
+EXE `4b189246…` y GLB `72bb…` intactos, sin reexportación ni nueva ronda.
+No está listo para el juicio formal frente a FIFA/GOALS,
+no hay score ni >=8, aceptación artística/gate o FPS aprobados. Este cierre
+no autoriza R4 ni más modelado o exportaciones.
+
+#### Fuentes para publicación 0.5.0-preview — 2026-09-16
+
+Nueva autorización explícita de publicación de los gráficos: coordinación
+prepara **0.5.0-preview para tres OS**, manteniendo 0.4 inmutable. Esta autorización
+de distribución sustituye la restricción de publicación anterior, **no** concede
+G2/G3, calidad FIFA/GOALS, puntuación >=8, FPS o aceptación humana. Lambert sólo
+prepara sus fuentes/procedencia; no publica, cambia versiones ni filtros LFS.
+
+Se conservan byte a byte el `.blend` **34b519…**, el GLB **72bb973c…**, los trece
+maestros PNG, los nueve PNG extraídos por Godot, sus diez `.import` contando
+el del GLB, ambos manifiestos de rig y la evidencia de normalización:
+**37 archivos protegidos sin cambios**. Los dos recursos LFS suman
+**41.989.165 bytes**. No se modeló, horneó, renderizó ni reexportó el atleta.
+
+Se retiraron únicamente las nueve copias PNG de `runtime\textures` y sus nueve
+`.import` (**5.531.963 bytes**). La búsqueda por rutas y UID no encontró
+consumidores fuera de sus propios imports; el contrato real sigue usando las
+imágenes del GLB y COLOR0. `export_athlete.py` deja de producir ese set: publica
+localmente sólo GLB y los dos JSON de integración, comprobando los nueve
+payloads embebidos contra los maestros. **No cambian los importflags de Godot.**
+Las copias retiradas y los manifiestos previos permanecen íntegros en
+`.dream-loop\athlete-upgrade\publication-cleanup`; los informes históricos no
+se reescriben como si aquellas copias nunca hubieran existido.
+
+Procedencia comprobada: **Body Male - Realistic, Dan Ulrich, CC0**, con el
+fingerprint de la geometría original conservado. `license_scope` aclara que
+CC0 corresponde a la base; no asigna licencia general de reutilización al
+código/arte propios, conforme a `THIRD_PARTY_NOTICES.md`. La fuente contiene
+sólo la base seleccionada y los objetos de autoría locales, sin bibliotecas
+enlazadas, textos ejecutables, acciones, drivers, clips o sonidos ajenos.
+La referencia débil de Blender al bundle es trazabilidad de append, no una
+dependencia: se comprobó la fuente en un árbol temporal sin bundle/cache,
+con únicamente `.blend` y mapas, manteniendo los datos y los 27 controles de rig.
+El marcador `Render Result` está vacío; no contiene una captura. El EXIF de
+los tres maestros AO contiene sólo resolución X/Y de 72 DPI. No fue necesario
+modificar el `.blend` ni los mapas por privacidad.
+
+Inventario final de rutas, tamaños, SHA-256 y exclusiones:
+`build\publication\graphics05-assets\inventory.json`. Se conservan el maestro,
+los catorce scripts de autoría/validación, los trece mapas y los manifiestos
+necesarios. Se excluyen de publicación el bundle completo, referencias privadas,
+caches, capturas/logs y copias históricas; las referencias a evidencia local
+en los manifiestos históricos no implican distribuir esos archivos.
+
+Validación acotada ejecutada con Blender `--background --factory-startup
+--disable-autoexec --python-exit-code 1`: `validate_integration_contract.py`
+da **27/27 rig, 19/19 estructura, 29/29 contactos y 21/21 guardas**, más diez
+casos de mapas/publicación, cuatro de privacidad/metadatos y tres de fuente
+aislada. `audit_publication.py` da **14/14**. Informes en el mismo directorio
+del inventario; pruebas con copias temporales, sin ejecutar el exportador glTF,
+reconstrucción completa ni Godot. No se atribuyen a esta limpieza nuevos
+resultados nativos, FPS o aceptación artística.
+
+**Fuentes preparadas; revisión independiente de Vasquez pendiente antes de
+publicación por coordinación. R3 sigue en 3/3, sin cuarta ronda.** Se mantienen
+los límites visuales de pelo, manos, acabado superficial, calzado y bajos.
+
 ## 4. Tres briefs de captura futura
 
 Todos a **1920 × 1080 nativos, 16:9**, desde el ejecutable real una vez implementado. No son imágenes existentes ni encargos de producción en esta fase. A es el objetivo principal del bucle; B y C son comprobaciones complementarias, no autorización para tres bucles paralelos.
