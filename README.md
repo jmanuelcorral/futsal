@@ -17,6 +17,9 @@ No necesitas Blender ni un editor de Godot para ejecutar los paquetes.
 La fuente actual corresponde a **0.5.0-preview**, con los atletas articulados R3.
 Las descargas históricas de **0.4** conservan la representación anterior.
 
+[Ver mecánicas en imágenes](#mecánicas-en-imágenes) ·
+[Consultar controles](#modos-y-controles-del-laboratorio)
+
 ## Atletas de la preview gráfica
 
 ![Detalle del atleta articulado en el candidato local 0.5](docs/images/athletes-0.5-detail.png)
@@ -182,13 +185,65 @@ las simplificaciones declaradas. El HUD muestra beneficiario, faltas, instruccio
 y cuenta de cuatro segundos cuando corresponda; el penalti no usa esa cuenta.
 No hay tarjetas, ventaja, sustituciones, dos tiempos ni reglamento completo.
 
-![Córner propio de la preview 0.4: cámara detrás del sacador, guía y portería despejada](https://raw.githubusercontent.com/jmanuelcorral/futsal/main/docs/images/gameplay-0.4-corner.png)
+## Mecánicas en imágenes
 
-Captura original del ejecutable **0.4.0, 5v5 experimental**, 1920×1080,
-sin retoques. Las veinte capturas verificadas del EXE, de ambos modos, están en
-`build\evidence\0.4.0-preview\gameplay` en el entorno local, con su manifiesto
-y checksums; la imagen de arriba es una copia byte-idéntica para el repositorio.
-Se preservan la [captura 0.3.0](https://github.com/jmanuelcorral/futsal/blob/main/docs/images/player-control-5v5.png), la
+Seis capturas **sin retoques del ejecutable Windows publicado en
+[0.5.0-preview](https://github.com/jmanuelcorral/futsal/releases/tag/v0.5.0-preview)**:
+5v5 experimental, 1920×1080 y Forward+. Son situaciones controladas de validación,
+no una grabación de una partida ni una prueba de rendimiento.
+
+### Tiro cargado y guía de apuntado
+
+![Tiro cargado al 25 % en 5v5, con flecha de dirección y barra de potencia](docs/images/gameplay-0.5/m1-live_charged_shot.png)
+
+Mantén **K / B** para cargar y suelta para chutar. La flecha sobre el parqué indica
+la dirección del lanzamiento; la barra del HUD muestra la potencia acumulada
+—25 % en esta captura—. La guía no garantiza que el balón llegue al destino.
+
+### Regates: enganche y cambio de ritmo
+
+![Contacto del enganche lateral en 5v5, con el aviso REGATE · Enganche](docs/images/gameplay-0.5/m1-dribble_left_contact.png)
+
+Con balón, **L / X + dirección lateral** activa el enganche. La imagen recoge
+el toque lateral: el balón sigue siendo disputable, no queda pegado al jugador.
+
+![Contacto del cambio de ritmo en 5v5, con su aviso en el HUD](docs/images/gameplay-0.5/m1-dribble_pace_contact.png)
+
+**L / X con intención frontal o neutra** activa el cambio de ritmo, la alternativa
+al enganche para salir hacia delante. El HUD distingue ambos regates.
+
+### Córner con cámara detrás del sacador
+
+![Córner local en 5v5 visto detrás del sacador, con flecha y cuenta de cuatro segundos](docs/images/gameplay-0.5/m1-corner_pos_x_pos_z.png)
+
+En un córner propio, la cámara se coloca detrás del sacador para facilitar
+la orientación. Apunta con **WASD / flechas / stick** y pulsa **J / A** para
+el pase rápido. Afina el ángulo sin mover al jugador con **Ctrl + (A/D o ←/→)**
+en teclado, o **LT + stick horizontal** en mando. El HUD muestra el plazo restante.
+
+### Saque de meta y pase con transferencia de foco
+
+![Portero local ID 2 preparando el saque de meta, con guía e instrucciones de lanzamiento](docs/images/gameplay-0.5/m1-keeper_clearance_ready.png)
+
+En el saque de meta propio controlas al **portero, ID 2**. El HUD cambia a
+apuntado: elige dirección y pulsa **J / A** para sacar con las manos.
+
+![Pase del portero en 5v5, con el control ya transferido al receptor de campo ID 8](docs/images/gameplay-0.5/m1-keeper_clearance_release.png)
+
+Tras aceptarse el lanzamiento, el HUD ya indica **CONTROL · ID 8**: el foco pasa
+al receptor sin esperar a que reciba el balón. En juego abierto, **J / A sin
+balón** cambia de compañero; combinarlo con una dirección orienta la selección.
+
+Los originales y sus hashes están en la
+[evidencia pública de la release](https://github.com/jmanuelcorral/futsal/releases/download/v0.5.0-preview/futsal-v0.5.0-preview-validation.tar.gz),
+bajo `windows-gpu-qa/public/gameplay-artifact-rendered/report-gameplay-captures/`.
+Identidad del EXE:
+`ef8ef82f36f82042cee9616fb958b56f5be54c2a51d2998479eeb2b77271db6a`.
+Estas imágenes no acreditan aceptación humana, calidad artística final ni 1080p60.
+
+**Historial visual:** se conservan el
+[córner 0.4.0](docs/images/gameplay-0.4-corner.png),
+la [captura 0.3.0](https://github.com/jmanuelcorral/futsal/blob/main/docs/images/player-control-5v5.png), la
 [captura 0.2.0](https://github.com/jmanuelcorral/futsal/blob/main/docs/images/preview-5v5.png) y la
 [captura G1](https://github.com/jmanuelcorral/futsal/blob/main/docs/images/g1-prototype.png), de cuatro atletas.
 **Representación provisional, no acabado final ni
